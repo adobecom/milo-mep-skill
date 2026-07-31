@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Python caches (the skill vendors openpyxl; keep source, drop bytecode)
+__pycache__/
+*.pyc
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+*.skill
