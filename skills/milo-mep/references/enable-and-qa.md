@@ -165,16 +165,21 @@ Work down this list:
    doesn't exist, so default content shows (expected behavior).
 8. **Target not serving** — Target activity is scoped to an audience the current
    user isn't in.
-9. **Untrusted fragment/script URL (silent drop)** — fragment and script values
-   must be same-origin, `*.adobe.com`, or `*--adobecom.(hlx|aem).(page|live)`.
-   Anything else is dropped without error. Check the host of the value.
-10. **Consent gating** — `manifest-marketing-action` gates serving on consent: a
-   `non-marketing` manifest needs performance consent; `marketing increase`
-   (the default when the key is absent, except promo-sourced manifests which
-   default to `core services/non-marketing` and always serve) needs advertising
-   consent. If consent isn't granted, the manifest serves its Default variant.
-11. **Geo restriction** — a `manifest-geo-restriction` list that excludes the
-    visitor's country forces the Default variant.
+9. **Fragment origin not allowed** — fragment loads must be same-origin,
+   configured in `allowedOrigins`, or pass Milo's trusted-URL check. Rejected
+   fragment loads are logged. Scripts use the trusted-URL check. Check the URL
+   host and the page's configured allowed origins.
+10. **Consent gating** — `manifest-consent-type` determines behavior:
+   `promo or no offer changes` bypasses gating; `non-personalized offer test`
+   requires performance consent and otherwise assigns a persistent randomized
+   variant; `personalized offer` requires both performance and advertising
+   consent and otherwise forces Default. When absent, the key defaults to
+   `personalized offer`, except promo-sourced manifests, which default to
+   `promo or no offer changes`. Legacy `manifest-marketing-action` values are
+   aliases; see `manifest-schema.md`.
+11. **Geo restriction** — a `manifest-country-restriction` list that excludes
+   the visitor's country forces the Default variant. For a single row, check
+   `country filter` / `country filter optional` instead.
 
 Reach for the `?mep` button's **Highlight Changes** and per-manifest experience
 dropdown to confirm what's actually being applied.

@@ -102,9 +102,10 @@ JSON (Excel tab names are prefixed `helix-`, e.g. `helix-experiences`; the
 published JSON drops the prefix → `experiences`):
 
 - **info** — manifest-level settings (`manifest-type`, `manifest-execution-order`,
-  `manifest-override-name`, `manifest-marketing-action`).
+  `manifest-override-name`, `manifest-consent-type`,
+  `manifest-country-restriction`).
 - **experiences** — the heart of the manifest. Each **row** is one change:
-  an `action`, a `selector` (where), an optional `page filter`, and then one
+  an `action`, a `selector` (where), optional page/country filters, and then one
   column **per experience** whose header is a personalization tag or Target
   activity name. Experience columns are ordered **highest priority first**;
   a user qualifies for the **first** matching column only.
@@ -208,7 +209,8 @@ milo may have changed): run `python3 scripts/check-source-drift.py` — it diffs
 the bundled snapshot against `main` and flags which **cited symbols** changed.
 On drift: adopt it with `python3 scripts/snapshot-source.py`, review/update the
 affected references + `source-notes.md`, re-run the linter and evals, then
-`./package-milo-mep.sh` and redistribute.
+run `./package-milo-mep.sh` from the repository root and redistribute the
+generated `milo-mep.skill`. Directory-based installs do not need packaging.
 
 Current syntax otherwise follows the public Milo docs
 (https://milo.adobe.com/docs/authoring/features/mep/). Adobe-internal

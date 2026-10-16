@@ -31,8 +31,16 @@ Two columns, `key` and `value`. Supported keys:
 | `manifest-type` | `Personalization` \| `Promo` \| `Test` | Controls analytics inclusion, and is the **tie-breaker** in ordering. Only `Personalization` is analytics-tracked (`Promo`/`Test` are excluded). When execution-order is equal (the common case), manifests run `Personalization` → `Promo` → `Test`. |
 | `manifest-execution-order` | `First` \| `Normal` \| `Last` | The **primary** sort key across all manifests on the page: `First` runs before everything and `Last` after everything **regardless of type**; `Normal` sits in between, after which `manifest-type` breaks ties. (Source sorts on `"<execOrderIdx>-<typeIdx>"` — see `source-notes.md`.) |
 | `manifest-override-name` | short string | Overrides the filename as the analytics name. Aim for ≤10 chars (runtime truncates to 15). Personalization manifests only. **Don't set/change it unless an analyst asks** — it's analytics-only, not arbitrary. |
-| `manifest-marketing-action` | `core services/non-marketing` \| `non-marketing` \| `marketing increase` \| `marketing decrease` | **Consent gating.** `core services…` always serves; `non-marketing` needs performance consent; `marketing increase` needs advertising consent. When the key is absent the default is `marketing increase` for normal manifests, but `core services/non-marketing` (always serves) for **promo-sourced** manifests. `marketing decrease` is allowed. See `source-notes.md`. |
-| `manifest-geo-restriction` | comma list of Akamai country codes | If the visitor's country isn't listed, the manifest serves its **Default** variant. |
+| `manifest-consent-type` | `promo or no offer changes` \| `non-personalized offer test` \| `personalized offer` | Canonical consent behavior. Promo/no-offer-change manifests bypass consent; non-personalized offer tests need performance consent; personalized offers need both performance and advertising consent. See `source-notes.md`. |
+| `manifest-country-restriction` | comma-separated country codes | Restricts the whole manifest; a visitor outside the list receives the **Default** variant. |
+
+Legacy aliases are still accepted: `manifest-marketing-action` maps `core
+services`, `core services/non-marketing`, and `non-marketing` to
+`promo or no offer changes`; `marketing decrease` and `marketing increase`
+map to `non-personalized offer test`. If neither consent key is set, the
+default is `personalized offer`, except promo-sourced manifests default to
+`promo or no offer changes`. `manifest-geo-restriction` remains an alias for
+`manifest-country-restriction`.
 
 ## `experiences` sheet
 
@@ -46,8 +54,10 @@ into two groups.
 | `action` | yes | What to do — see `actions.md`. Chosen from a dropdown in the template. |
 | `selector` | depends on action | Where on the page — a CSS selector, a simplified selector, a fragment URL, or empty. See `selectors.md`. For `updateAttribute` the attribute name is appended to the selector. |
 | `page filter (optional)` | no | Restricts the row to matching page paths. Blank = applies everywhere the manifest runs. See page-filter syntax in `personalization-tags.md`. |
+| `country filter` or `country filter optional` | no | Restricts the row to the listed comma-separated visitor country codes. Blank = no country restriction. |
 
-Note the published JSON column key is literally `page filter (optional)`.
+The published JSON keys are literally `page filter (optional)` and
+`country filter` / `country filter optional`.
 
 ### Experience columns (one per experience, ordered by priority)
 

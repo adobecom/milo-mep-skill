@@ -1,6 +1,10 @@
 personalization.js libs/features/personalization/personalization.js
 preview.js libs/features/personalization/preview.js
 preview.css libs/features/personalization/preview.css
+mep-next.js libs/features/mep/mep-next/mep-next.js
+mep-overlay-logic.js libs/features/mep/mep-next/mep-overlay/mep-overlay-logic.js
+mep-overlay.js libs/features/mep/mep-next/mep-overlay/mep-overlay.js
+spoof-country-ip.js libs/features/mep/mep-next/spoof-country-ip.js
 promo-utils.js libs/features/personalization/promo-utils.js
 preview-mas-subcollection.js libs/features/personalization/preview-mas-subcollection.js
 add-preview-to-config.js libs/features/personalization/add-preview-to-config.js

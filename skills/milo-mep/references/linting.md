@@ -92,7 +92,7 @@ authoritative 404 results.
 - undefined `{{placeholder}}`; over-long or non-lowercase-dashed
   `manifest-override-name`
 
-**Info**: missing `manifest-marketing-action` (type-aware consent default);
+**Info**: missing `manifest-consent-type` (type-aware consent default);
 override-name on a non-Personalization manifest; US-exact page filter whose
 siblings use `**` (a likely missing `**`).
 

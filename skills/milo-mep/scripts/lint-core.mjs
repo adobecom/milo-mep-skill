@@ -8,6 +8,7 @@
 
 const INFO_KEYS = new Set([
   "action", "selector", "page filter", "page filter (optional)", "pagefilter",
+  "country filter", "country filter optional",
 ]);
 const TRUSTED_HOST = /(^|\.)adobe\.com$|--adobecom\.(hlx|aem)\.(page|live)$/;
 
@@ -159,12 +160,17 @@ export function lintManifest(m) {
       add("warn", "info", `manifest-override-name '${on}' should be lowercase letters, numbers, and dashes only (it's passed to analytics).`);
     if (on && mt && mt !== "Personalization")
       add("info", "info", "manifest-override-name is ignored for non-Personalization manifests.");
-    if (!(info["manifest-marketing-action"] || "").trim()) {
-      if (mt === "Promo")
-        add("info", "info", "no manifest-marketing-action → promo default is 'core services/non-marketing' (always serves).");
-      else
-        add("info", "info", "no manifest-marketing-action → defaults to 'marketing increase' (advertising consent required); set it deliberately if this should serve pre-consent.");
-    }
+    const consentType = (info["manifest-consent-type"] || "").trim();
+    const legacyConsentType = (info["manifest-marketing-action"] || "").trim();
+    const consentTypes = [
+      "promo or no offer changes",
+      "non-personalized offer test",
+      "personalized offer",
+    ];
+    if (consentType && !consentTypes.includes(consentType.toLowerCase()))
+      add("warn", "info", `manifest-consent-type '${consentType}' is not a recognized consent type.`);
+    if (!consentType && !legacyConsentType)
+      add("info", "info", "no consent type → defaults to 'personalized offer' (performance + advertising consent); promo-sourced manifests default to 'promo or no offer changes'.");
   }
 
   // ---- placeholders defined ----

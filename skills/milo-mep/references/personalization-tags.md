@@ -121,7 +121,10 @@ params, promo scheduling.
 No Target required but **render-blocking**: **login state
 (`loggedin`/`loggedout`) and entitlements** — Milo must load IMS and resolve
 sign-in/entitlement before rendering, so these add to LCP even though no Target
-is involved. Don't call a logged-in experience "free."
+is involved. On hosts without a Server-Timing sign-in hint (for example,
+`aem.live`), Milo now checks IMS sign-in state before waiting for the Alloy
+entitlement event; on hosts that provide the hint, the existing path is
+unchanged. Don't call a logged-in experience "free."
 
 Target required (`target on`, slower — blocks page build): A/B tests and
 AAM/Target audience segments.
