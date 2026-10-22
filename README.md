@@ -106,9 +106,10 @@ The skill is grounded in the **Milo source**
 ([`adobecom/milo`](https://github.com/adobecom/milo),
 `libs/features/personalization/`). It prefers a **live local checkout** if one
 exists (freshest), otherwise a **pinned snapshot** bundled under
-[`skills/milo-mep/assets/source/`](skills/milo-mep/assets/source/) — 16 files
-(`personalization.js`, `utils.js`, `merch.js`, `preview.js`, `fragment.js`,
-`lingo.js`, …), pinned to a specific `main` commit recorded in `SOURCE_VERSION`.
+[`skills/milo-mep/assets/source/`](skills/milo-mep/assets/source/) — 20 files
+(`personalization.js`, `utils.js`, `merch.js`, the legacy `preview.js` and
+current MEP Next sources, `fragment.js`, `lingo.js`, …), pinned to a specific
+`main` commit recorded in `SOURCE_VERSION`.
 This keeps the skill working offline and its facts reproducible. **When the docs
 and the source disagree, the source wins.**
 
@@ -166,6 +167,21 @@ Or open `skills/milo-mep/scripts/lint.html` in a browser and paste the JSON.
 
 - **Changelog** — notable changes are in
   [`skills/milo-mep/CHANGELOG.md`](skills/milo-mep/CHANGELOG.md).
+
+### Packaging for manual distribution
+
+Run `./package-milo-mep.sh` from the repository root (requires Python 3).
+The script also works when invoked by path from another directory. It creates
+`milo-mep.skill` at the repository root: a ZIP archive containing the
+`milo-mep/` directory, including references, scripts, vendored dependencies,
+and assets. Hidden files, evals, Python caches, and existing `.skill` archives
+are excluded; symlinks are rejected.
+
+Share the archive with users whose tools accept `.skill` uploads, or unzip it
+into a tool's skills directory. Directory-based installs do not need this step.
+The generated archive is ignored by Git and is replaced on each successful
+build. Packaging does not fetch source or run validation; refresh the snapshot
+and rebuild `scripts/lint.html` after linter changes before packaging.
 
 ---
 

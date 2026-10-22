@@ -19,8 +19,8 @@ to campaign intent, cart-abandoners, B2B buyers, and device.">
 - **Type / order:** Personalization | Promo | Test; execution order; and whether
   it's analytics-tracked (only Personalization is).
 - **Analytics name:** `manifest-override-name` or the filename truncated to 15.
-- **Consent:** what `manifest-marketing-action` requires — and **flag the default**
-  (`marketing increase` → advertising consent) when the key is absent.
+- **Consent:** report `manifest-consent-type` and its effect; flag the default
+  (`personalized offer` → performance + advertising consent) when absent.
 - **Placeholders:** present/empty; flag any `{{token}}` used but undefined here.
 
 ### Audiences (priority order — first match wins)
@@ -74,8 +74,9 @@ the campaign brief) rather than over-guessing.
 ## Don't-miss checks (fold these into Errors/Opportunities)
 
 Always run these while interpreting — they're the defects human readers miss:
-- **Consent default:** missing `manifest-marketing-action` → advertising consent
-  required (whole manifest gated). Flag it.
+- **Consent default:** missing `manifest-consent-type` → `personalized offer`
+  (performance + advertising consent required), except promo-sourced manifests,
+  which default to `promo or no offer changes`. Flag the applicable default.
 - **No-op rows:** a row with a selector/page filter but **no experience value**
   does nothing — likely an unfinished row.
 - **Page-filter regex typos:** filters are compiled as regex (`matchGlob`). A

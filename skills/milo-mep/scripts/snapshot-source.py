@@ -59,7 +59,7 @@ linter/evals, and repackage. References cite these by function name (stable);
 line numbers are indicative and may drift between snapshots.
 """)
     print(f"\nSnapshot updated to {BRANCH}@{sha[:12]} ({ok} files). SOURCE_VERSION rewritten.")
-    print("Next: review references + source-notes.md, re-run linter/evals, then ./package-milo-mep.sh")
+    print("Next: review references + source-notes.md, re-run linter/evals, then run ./package-milo-mep.sh from the repository root.")
     return 0
 
 if __name__ == "__main__":

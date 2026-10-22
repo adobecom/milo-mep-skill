@@ -1,12 +1,12 @@
 # The MEP Button (Preview Panel)
 
-The MEP button is MEP's on-page debug/preview tool. Source of truth:
-`assets/source/preview.js` (+ `preview.css`). The panel is rendered by
-`preview.js`'s default export (`decoratePreviewMode`), invoked upstream when
-preview mode is on; the only `preview.js` call inside the bundled `init()` is
-`saveToMmm()`, which records the MMM visit (not the panel render). This file
-explains both **what it does** and **how it works**, so the skill can answer
-either.
+The MEP button is MEP's on-page debug/preview tool. The current MEP Next panel
+is the default; source is `assets/source/mep-next.js`, with URL assembly in
+`mep-overlay-logic.js` and country/IP spoofing in `spoof-country-ip.js`.
+`preview.js` (+ `preview.css`) remains the legacy panel selected by
+`?mepnext=off`. The detailed legacy implementation notes below remain useful
+because the controls and URL behavior overlap; use the current source when
+confirming UI differences.
 
 ## When it appears
 
@@ -22,23 +22,29 @@ Hide it with **`mepButton=off`** (preview overrides still apply).
 
 ## Anatomy
 
-It renders as a **popover pill** — "`N Manifest(s) found`" — pinned bottom-left.
-Clicking it toggles the full **panel** (`.mep-preview-overlay` popover). The
+The current MEP Next UI is a floating button (`.mep-fab`) that opens the
+`#mep-drawer`, with **Actions** and **Summary** tabs. Actions include highlight
+toggles, preview-link/manifest-parameter/manifest-manager controls, country
+spoofing, and loading a manifest. Its Summary shows page consent, Lingo, M@S,
+and CaaS information. Most action controls require authentication.
+
+The legacy panel renders as a **popover pill** — "`N Manifest(s) found`" —
+pinned bottom-left. Clicking it toggles `.mep-preview-overlay`. The legacy
 panel is built from `parseMepConfig()`, which reads `config.mep` and the page:
 
-**Page-level info** (`parseMepConfig().page`):
+**Legacy page-level info** (`parseMepConfig().page`):
 - `target` — value of the `target` metadata (`on`/`postlcp`/`off`).
 - `personalization` — `on` if `personalization` metadata is present, else `off`.
 - `geo` (locale prefix, blank for `en-us`), `locale` (ietf), `region`.
 - `highlight` — whether highlight mode is active.
 
-**Per-manifest list** (`getManifestListDomAndParameter()`), each row shows:
+**Legacy per-manifest list** (`getManifestListDomAndParameter()`), each row shows:
 - Ordinal + filename, linked to the manifest to **open/edit** it.
 - Target activity name (if any).
 - **Selected experience** — the variant chosen on load, shown as the pre-selected
   dropdown option (bolded active variant), or "default (control)" if none matched.
-- `source` (pzn / pzn-roc / promo / target / mep param), `mktgAction`
-  (marketing-action), `geoRestriction` if set.
+- `source` (pzn / pzn-roc / promo / target / mep param), `Consent req`
+  (`consentType`), and `Allowed User Countries` (`countryRestriction`) when set.
 - For promos: `Active?` (active/inactive) and the `On`/`Off` event window, with an
   **`?instant=<iso>`** link to simulate that moment in time.
 - `Last Seen` (from the MMM data API) when available.
@@ -48,28 +54,34 @@ panel is built from `parseMepConfig()`, which reads `config.mep` and the page:
 ## Region / locale preview
 
 Region/market spoofing is **delivery-side, not a DA feature** — so it's not a DA
-product request. The MEP pill's region/market control writes **`?akamaiLocale=<cc>`**
-(equivalent to spoofing the visitor's IP), driving `countryip(...)` audiences and
-market-priced commerce; you can add a toggle to the pill to flip region and see
-the effect in live preview. Delivery code can tell it's running inside **DA's
-live preview** by checking for the **`?dapreview=on`** query parameter. Note:
-making DA itself switch the editor to a different locale was discouraged — it
-breaks the live-preview model (the editor is still editing the underlying page,
-not the spoofed locale). To simply jump to a page's counterpart in another
-locale, the existing **`Locales` plugin** already does that.
+product request. The MEP Next region/market control writes
+**`?akamaiLocale=<cc>`** for Milo's geo resolution and, for supported countries,
+**`mboxOverride.browserIp=<ip>`** so Adobe Target's IP-based geo-fencing uses
+the same country. This drives `countryip(...)` audiences and market-priced
+commerce; you can change the control and preview the effect. Delivery code can
+tell it's running inside **DA's live preview** by checking for the
+**`?dapreview=on`** query parameter. Note: making DA itself switch the editor to
+a different locale was discouraged — it breaks the live-preview model (the
+editor is still editing the underlying page, not the spoofed locale). To simply
+jump to a page's counterpart in another locale, the existing **`Locales` plugin**
+already does that.
 
-## How the Preview URL is built (`updatePreviewButton`)
+## How the Preview URL is built (current MEP Next)
 
-This is the core mechanic. When you change any control, it rebuilds the href on
-the panel's **Preview** button (`a.con-button`):
+The current `mep-overlay-logic.js` rebuilds the href on the drawer's **Preview**
+button (`.mep-footer a.con-button`) when controls change:
 
 1. Collects every selected `<option>` and text input. For each manifest it
    serializes `"<manifestPath>--<variant>"`; a newly typed manifest path is added
    as just its path.
 2. Joins them with `---` and sets **`?mep=<manifestPath>--<variant>---<path2>--<variant2>…`**
    on a copy of the page URL.
-3. Folds the toggles into query params (and mirrors each onto a `document.body`
-   dataset so the current page updates live):
+3. Folds the toggles into query params (and mirrors highlight flags onto
+   `document.body` datasets so the current page updates live). The **Manifest
+   Parameters** toggle removes the forced manifest list but keeps a bare `?mep`
+   in the preview URL, so the MEP button remains available without applying
+   manifest parameters. Its choice persists in `sessionStorage` until the tab
+   closes.
 
 | Checkbox | URL param | body dataset |
 |---|---|---|
@@ -78,7 +90,8 @@ the panel's **Preview** button (`a.con-button`):
 | CaaS highlight | `mepCaasHighlight=true` | `data-mep-caas-highlight` |
 | MAS highlight | `mepMasHighlight=true` | `data-mep-mas-highlight` |
 | Turn off preview button | `mepButton=off` | — |
-| Region/market spoofer | `akamaiLocale=<code>` (+ `mepMasMarket=true`) | — |
+| Manifest Parameters | bare `mep` (no manifest values) | — |
+| Region/market spoofer | `akamaiLocale=<code>` and, for supported countries, `mboxOverride.browserIp=<ip>` (+ `mepMasMarket=true`) | — |
 
 Clicking **Preview** navigates to that URL, so the chosen experiences and
 toggles are locked in (and shareable). `?mep=off` turns off the `?mep`
@@ -139,10 +152,12 @@ CaaS and M@S ones additionally inject clickable **badges** via MutationObservers
 
 ## Region / market spoofer
 
-Dropdowns write **`?akamaiLocale=<code>`** to simulate a detected country (for
-`countryip(...)` audiences and market-priced commerce), and a Lingo region select
-simulates localization region. M@S market spoofing adds `mepMasMarket=true` to
-persist across reloads.
+Dropdowns write **`?akamaiLocale=<code>`** to simulate Milo's detected country
+(for `countryip(...)` audiences and market-priced commerce). For supported
+countries, the preview also writes **`mboxOverride.browserIp=<ip>`** so Target
+uses the same country for IP-based geo-fencing. A Lingo region select simulates
+localization region. M@S market spoofing adds `mepMasMarket=true` to persist
+across reloads.
 
 ## Shared with the MMM report
 
@@ -156,7 +171,7 @@ from.
 
 | param | effect |
 |---|---|
-| `?mep` | force the button/preview mode on |
+| `?mep` | force the button/preview mode on; with no value, no manifest overrides are forced |
 | `?mep=off` | turn off the `?mep` experience overrides |
 | `?mep=<path>--<variant>---…` | force specific experiences per manifest |
 | `mepButton=off` | hide the button (overrides still apply) |
@@ -164,7 +179,8 @@ from.
 | `mepFragments=true` | highlight default fragment locations |
 | `mepCaasHighlight=true` | show CaaS edit badges |
 | `mepMasHighlight=true` | show M@S/commerce edit badges + market chips |
-| `akamaiLocale=<code>` | spoof detected country/market |
+| `akamaiLocale=<code>` | spoof Milo's detected country/market |
+| `mboxOverride.browserIp=<ip>` | align Target's IP-based geo-fencing with the spoofed country |
 | `mepMasMarket=true` | persist the M@S market spoof across reloads |
 | `?instant=<iso-date>` | simulate "now" (for promo scheduling windows) |
 

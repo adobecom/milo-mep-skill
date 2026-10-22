@@ -14,7 +14,9 @@ manifest-execution-order   Normal
 manifest-marketing-action  non-marketing
 ```
 → A Personalization manifest (counts in analytics, runs first), normal ordering,
-no analytics-name override, classified non-marketing.
+no analytics-name override. This legacy consent value now normalizes to
+`promo or no offer changes` (consent bypass), not the older performance-consent
+meaning; prefer the canonical `manifest-consent-type` key in new manifests.
 
 ## `experiences` sheet — columns
 
@@ -26,6 +28,9 @@ Priority order (from the JSON `columns` array), left to right:
 6. `param-view=demo`
 7. `param-view=trial`
 8. `desktop`  9. `tablet`  10. `Phone`
+
+`country filter` / `country filter optional` can also be added as informational
+columns before the experience columns; this example does not use them.
 
 So an eligible visitor to the Target activity `example-promo` gets that column;
 otherwise a `?view=…` URL param picks a variant; otherwise device tags apply.

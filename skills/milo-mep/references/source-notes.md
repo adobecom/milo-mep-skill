@@ -1,7 +1,7 @@
 # Ground Truth from Source
 
 Facts verified against the Milo source. Repo:
-https://github.com/adobecom/milo/tree/stage/libs/features/personalization
+https://github.com/adobecom/milo/tree/main/libs/features/personalization
 
 **Where to read the source:** prefer a **live local checkout** — it's fresher
 than the snapshot. It's commonly at
@@ -9,10 +9,11 @@ than the snapshot. It's commonly at
 local `milo` checkout, and only then fall back to the bundled snapshot in
 `assets/source/` (`personalization.js`, `promo-utils.js`, `preview.js`, …). The
 snapshot exists so the skill works with no checkout, but it can drift from
-`stage` over time — when it matters, read the live repo.
+`main` over time — when it matters, read the live repo.
 
 When the public docs and the source disagree, **the source wins** — it's what
-actually runs. Grep the source (`personalization.js`) to confirm edge cases.
+actually runs. The bundled snapshot is pinned in `assets/source/SOURCE_VERSION`;
+grep its files (or the live checkout) to confirm edge cases.
 
 ## Audience column headers — exact matching logic
 
@@ -136,22 +137,46 @@ a PZN manifest unless an analyst asks**; it's an analytics-only field.
 - `#_href` (and `updateAttribute` `href_<param>`) — operate on a link's `href`:
   `href_#` appends to the href; `href_<param>` sets that query parameter (e.g.
   `href_osi` sets the `osi` param). Bare `#_href` replaces the href.
+- Inline fragments normally insert their section contents. When the target has
+  `data-mep-replace-type="row"` or `"cell"`, Milo instead extracts the
+  corresponding row/cell content from the first fragment section and replaces
+  that container. Inline fragment loading only supports one section; later
+  sections are ignored.
+
+## Fragment media reuse
+
+When MEP replaces or removes content, it records valid `media_` image URLs from
+the removed elements. A subsequently loaded fragment can reuse a recorded URL
+when its relative `./media_...` asset has the same origin, media key, and query
+string, avoiding a duplicate image fetch. Broken images and malformed or
+multi-candidate media references are not reused. See `assets/source/fragment.js`
+and `personalization.js`.
 
 ## Info sheet keys — full set (`getManifestConfig`)
 
 Beyond `manifest-type` / `manifest-execution-order` / `manifest-override-name`:
 
-- **`manifest-marketing-action`** — governs **consent gating** (`canServeManifest`):
-  - `core services/non-marketing` (or `core services`) → always served.
-  - `non-marketing` → served only with **performance** consent.
-  - `marketing increase` → served only with **advertising** consent. This is the
-    default when the key is absent — **except** for promo-sourced manifests,
-    whose absent-key default is `core services/non-marketing` (always serves).
-    (`getManifestMarketingAction`: `if (source?.includes('promo')) return
-    coreServicesNonMarketing;`.)
-  - `marketing decrease` → allowed.
-- **`manifest-geo-restriction`** — comma list of Akamai country codes; if the
-  visitor's country isn't listed, the manifest serves its **Default** variant.
+- **`manifest-consent-type`** — canonical consent classification:
+  - `promo or no offer changes` → bypasses consent gating.
+  - `non-personalized offer test` → requires performance consent. Without it,
+    Milo assigns a persistent randomized variant; a country-ineligible visitor
+    still receives Default.
+  - `personalized offer` → requires both performance and advertising consent;
+    otherwise Default is forced.
+  - Missing key defaults to `personalized offer`, except promo-sourced
+    manifests, which default to `promo or no offer changes`.
+- **Legacy `manifest-marketing-action` aliases:** `core services`,
+  `core services/non-marketing`, and `non-marketing` map to
+  `promo or no offer changes`; `marketing decrease` and `marketing increase`
+  map to `non-personalized offer test`. They no longer mean independent
+  performance-vs-advertising gates.
+- **`manifest-country-restriction`** — comma-separated country codes for the
+  whole manifest; a visitor outside the list gets Default. Legacy
+  `manifest-geo-restriction` is still accepted. Country codes normalize to
+  lowercase, `uk` maps to `gb`, and locale-like suffixes normalize to country.
+- **Experience-row `country filter` / `country filter optional`** — a
+  comma-separated country list can also scope one action row without restricting
+  the whole manifest. Country codes use the same normalization.
 
 ## Enablement & security
 
@@ -160,11 +185,18 @@ Beyond `manifest-type` / `manifest-execution-order` / `manifest-override-name`:
   the `?mep` param, and `mktg-decrease`. Target/AJO manifests are added
   separately in `init()` (via `callMartech` / `handleMartechTargetInteraction`),
   not in `combineMepSources`.
+- Entitlement resolution uses the Alloy event after sign-in. If the page has no
+  Server-Timing sign-in hint (for example, on `aem.live`), current Milo `main`
+  checks IMS sign-in state before awaiting that event; pages with the hint keep
+  the existing path. This avoids leaving the entitlement promise pending on
+  hosts that omit the header.
 - **`target` metadata** resolves to `true` | `'postlcp'` | off — `postlcp` is the
   faster mode where Target controls only non-LCP (below section 1) changes.
-- **Trusted URLs only** (`isTrustedUrl`): fragment/script values must be
-  same-origin, `*.adobe.com`, or `*--adobecom.(hlx|aem).(page|live)`. Untrusted
-  values are dropped silently — a common "why didn't it apply" cause.
+- **Trusted URLs only:** scripts are checked by `isTrustedUrl`; fragment loads
+  may also use configured `allowedOrigins`. Otherwise fragments must be
+  same-origin or pass `isTrustedUrl` (`*.adobe.com` and supported Adobe
+  preview/publish hosts). Rejected fragment loads are logged, not silently
+  dropped.
 - `href` values of `javascript:`/`data:` are rejected in `updateAttribute`.
 
 ## Page-filter glob (`matchGlob`)

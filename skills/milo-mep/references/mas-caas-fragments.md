@@ -54,6 +54,12 @@ registers it in `config.mep.inBlock[block].fragments`, and injects an
 override. Prefer this when you're swapping one M@S fragment for another by id,
 rather than doing raw DOM surgery on `a[href*=guid]`.
 
+For a field-level override, the MAS Studio URL in the selector can include
+`&field=<field-name>` after its fragment/query identifier. Milo keys that
+override by both the source fragment and field; the replacement MAS URL still
+provides the replacement fragment. This also supports lightweight inline MAS
+field links without hydrating a full merch card.
+
 ## Replacing specific cards in a `merch-card-collection`
 
 To swap individual cards inside a catalog/collection, target the collection block
