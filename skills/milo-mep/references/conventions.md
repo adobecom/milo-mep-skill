@@ -123,7 +123,12 @@ are always safe. But two placements bite:
 ## Manifest priority on a page
 
 When a page lists **multiple** manifests in its `personalization` metadata,
-priority follows the **order the URLs are listed — top = highest**.
+compare **Execution Order first, then Type**: `First` → `Normal` → `Last`,
+then `Personalization` → `Promo` → `Test`. This also applies to Target-delivered
+manifests. Only when both settings tie does metadata URL order decide which
+metadata-listed manifest runs first (top first). Change settings in each
+manifest's `helix-info` sheet, not the MEP drawer. See `enable-and-qa.md` →
+*Priority: MEP vs Target* for examples and verification.
 
 ## Team & support
 

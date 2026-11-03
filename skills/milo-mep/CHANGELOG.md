@@ -3,6 +3,17 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
+## 2026-11-03
+
+**MEP vs Target priority**
+- Added an explicit cross-source answer: Execution Order first, then Type
+  (`Personalization` before `Promo` when execution order ties), with examples
+  and `helix-info` authoring guidance.
+- Corrected metadata-order-only guidance across the entry point and references;
+  URL order only breaks ties after execution order and type.
+- Clarified drawer numbering versus priority and action-specific final results,
+  grounded in the bundled manifest sort and application code.
+
 ## 2026-10-16
 
 **Optional distribution archive**

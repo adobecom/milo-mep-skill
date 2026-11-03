@@ -34,6 +34,11 @@ Two columns, `key` and `value`. Supported keys:
 | `manifest-consent-type` | `promo or no offer changes` \| `non-personalized offer test` \| `personalized offer` | Canonical consent behavior. Promo/no-offer-change manifests bypass consent; non-personalized offer tests need performance consent; personalized offers need both performance and advertising consent. See `source-notes.md`. |
 | `manifest-country-restriction` | comma-separated country codes | Restricts the whole manifest; a visitor outside the list receives the **Default** variant. |
 
+**MEP vs Target:** these same ordering keys apply to Target-delivered manifests;
+delivery source does not confer priority. Set them in `helix-info`. When both
+keys tie, the stable sort keeps input order (metadata URL order for manifests
+listed there). See `enable-and-qa.md` → *Priority: MEP vs Target* for examples.
+
 Legacy aliases are still accepted: `manifest-marketing-action` maps `core
 services`, `core services/non-marketing`, and `non-marketing` to
 `promo or no offer changes`; `marketing decrease` and `marketing increase`

@@ -51,6 +51,7 @@ Start here to orient, then follow the pointers.
 | Task | Read |
 |---|---|
 | Explain a concept, term, or how MEP behaves | this file; `references/concepts.md` for depth |
+| **MEP vs Target priority** / conflicting manifests | `references/enable-and-qa.md` → *Priority: MEP vs Target*; `references/source-notes.md` for exact sorting |
 | **Interpret** an existing manifest (xlsx/json) | `references/interpret-output-format.md` (how to present it), plus `references/manifest-schema.md`, then `references/actions.md`, `references/selectors.md`, `references/personalization-tags.md` as needed |
 | **Author / design** a new manifest from a goal | start from `assets/mep-manifest-template.xlsx` (the official base), all of the above **plus** `references/conventions.md` (naming/folders) |
 | **Enable** MEP on a page | `references/enable-and-qa.md` |
@@ -179,8 +180,13 @@ and the causes menu — both in `references/enable-and-qa.md`.
   reuses the US manifest and Milo looks for a same-named local fragment; if
   none exists, the default (unpersonalized) content shows. Use `#_dnt` or
   placeholders to opt a fragment out of localized lookup.
-- **Manifest priority on a page** = the order the manifest URLs are listed in
-  `personalization` metadata (top = highest).
+- **Manifest priority (including MEP vs Target)**: compare
+  `manifest-execution-order` first (`First` → `Normal` → `Last`), then
+  `manifest-type` (`Personalization` → `Promo` → `Test`). Target-delivered
+  manifests use the same ordering; Target is not inherently higher priority.
+  Metadata list order is only a tie-breaker when both settings are equal.
+  Change these settings in each manifest's `helix-info` sheet, not the drawer.
+  See `references/enable-and-qa.md` → *Priority: MEP vs Target*.
 
 ## Source authority
 

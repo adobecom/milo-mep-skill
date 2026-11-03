@@ -68,6 +68,29 @@ Manifests are sorted by `executionOrder`, a string `"<execOrderIdx>-<typeIdx>"`:
 - `manifest-type`: `Personalization`=0, `Promo`=1, `Test`=2 (secondary).
 - Missing info → default `"1-1"`.
 
+This is **one shared sort for MEP-native and Target-delivered manifests**:
+`init()` combines metadata and Target sources, and `applyPers()` parses their
+configs via `getManifestConfig()` before `cleanAndSortManifestList()` sorts
+them with `compareExecutionOrder()`. Delivery source (`pzn`, `target`, etc.)
+is not a sort key. Thus equal-order `Personalization` precedes `Promo`
+regardless of which was delivered by Target.
+
+`compareExecutionOrder()` returns `0` for equal keys, so the stable sort
+preserves input order. Metadata URL order matters only after both keys tie;
+it is not an override for execution order or type. Author these settings in
+`helix-info` (`info` in JSON); see `enable-and-qa.md` → *Priority: MEP vs Target*.
+
+**Processing order is not a universal final-value rule.** In
+`consolidateObjects()`, fragment actions keep the first entry for a selector,
+while block-code mappings overwrite earlier entries. DOM commands are
+concatenated in order by `consolidateArray()`; `replace` skips an element
+already marked replaced, but `updateAttribute` can write the same attribute
+again. `categorizeActions()` also overwrites `replacepage`/`updateframework`
+with later values. Verify the actual conflicting action rather than promising
+that every earlier manifest's value survives. `postlcp` Target delivery is
+handled separately; the shared sort is not a guarantee that a late response
+can undo changes already applied.
+
 Only `manifest-type: Personalization` is analytics-tracked
 (`TRACKED_MANIFEST_TYPE`). `manifest-override-name`/filename analytics title is
 truncated to **15 chars** (docs say "aim for 10").
