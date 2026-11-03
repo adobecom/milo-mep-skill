@@ -51,6 +51,14 @@ panel is built from `parseMepConfig()`, which reads `config.mep` and the page:
 - An **experience `<select>` dropdown**: `None (Don't add manifest)` /
   `Default (control)` / each variant name.
 
+**MEP vs Target priority:** a Target activity appearing first is not proof of
+an inherent Target-over-MEP rule. Milo compares `manifest-execution-order`
+first (`First` → `Normal` → `Last`), then `manifest-type`
+(`Personalization` → `Promo` → `Test`) for both sources. Change those values
+in the manifest's `helix-info` sheet, not by rearranging the drawer. See
+`enable-and-qa.md` → *Priority: MEP vs Target*; use Highlight Changes to verify
+the actual conflicting element.
+
 ## Region / locale preview
 
 Region/market spoofing is **delivery-side, not a DA feature** — so it's not a DA

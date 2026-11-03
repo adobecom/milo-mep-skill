@@ -6,7 +6,7 @@ MEP is turned on via **page metadata**. Two properties:
 
 | metadata property | value | effect |
 |---|---|---|
-| `personalization` | manifest path(s), e.g. `/example/smart-tools.json` | Attaches manifest(s). Multiple allowed, comma- or line-break-separated. **Order = priority** (top highest). Low performance cost. |
+| `personalization` | manifest path(s), e.g. `/example/smart-tools.json` | Attaches manifest(s). Multiple allowed, comma- or line-break-separated. List order breaks ties only after execution order and type (see below). Low performance cost. |
 | `target` | `on` / `postlcp` / `off` | Enables Adobe Target integration. Needed for A/B tests and AAM/Target segments. **Significant Lighthouse/perf cost** even with no active activity — leave `off` unless Target is actually needed. `postlcp` is the faster mode (Target controls only non-LCP / below-section-1 changes). |
 
 Two ways to set them:
@@ -60,6 +60,60 @@ path is usually driven by `personalization-v2` + the spreadsheet/Target, not a b
 Use the MMM **MEP-Target Inactivity Report** to find pages with Target
 needlessly `on`.
 
+## Priority: MEP vs Target
+
+**Execution Order is checked first, then Type** — for both MEP-native and
+Target-delivered manifests. Target is a delivery source, not a higher-priority
+manifest type. Don't answer this case only with the order of paths in
+`personalization` metadata, or claim that cross-system ordering is undefined:
+Target-delivered manifests join MEP's shared manifest sort.
+
+| Compare in this order | Setting in `helix-info` | Earlier / higher priority |
+|---|---|---|
+| 1. Execution Order | `manifest-execution-order` | `First` → `Normal` → `Last` |
+| 2. Type (only if Execution Order ties) | `manifest-type` | `Personalization` → `Promo` → `Test` |
+| 3. Both settings tie | Input order | Stable sort preserves incoming order; for metadata-listed manifests, first listed stays first |
+
+For example, if both manifests have `Normal` execution order:
+
+| Delivery source | `manifest-execution-order` | `manifest-type` | Result |
+|---|---|---|---|
+| MEP / page metadata | `Normal` | `Personalization` | Earlier / higher priority |
+| Target | `Normal` | `Promo` | Later / lower priority |
+
+Reverse the delivery sources and the `Personalization` manifest still comes
+first. A `First` + `Promo` manifest also comes before a `Normal` +
+`Personalization` manifest: execution order takes precedence over type.
+
+**How to change the order:** edit the relevant manifest's **`helix-info`**
+sheet (`info` in published JSON). For example, to move an existing Promo ahead
+of a Normal Personalization while keeping its type:
+
+```text
+key                         value
+manifest-execution-order    First
+manifest-type               Promo
+```
+
+Confirm the other manifest's settings too; `First` does not outrank another
+`First` without comparing types. Keep type aligned with the actual use case
+(it affects analytics); prefer execution order when changing sequencing.
+Reordering the drawer is not the authoring control, and rearranging metadata
+paths cannot override different execution-order/type settings.
+
+**Scope:** this is Milo's ordering of manifests, including those delivered by
+Target — not a universal priority rule for arbitrary Target scripts or offers
+outside the MEP manifest pipeline. Earlier processing is not a guarantee of
+the final value for every action: later attribute updates can overwrite earlier
+ones, while fragment replacements have first-selector-wins behavior. See
+`source-notes.md` for the action-specific details. Within one manifest,
+experience columns are a separate rule: leftmost matching column wins.
+
+**Verify:** reload with `?mep` (or append `&mep` to an existing query), inspect
+both manifests' settings and selected experiences, and enable **Highlight
+Changes** on the conflicting element. The panel's numbered list alone does
+not prove that Target has priority or which action ultimately wins.
+
 ## The MEP button & `?mep` preview parameter
 
 > For a full "what it does **and how it works**" explanation (panel anatomy,
@@ -99,8 +153,8 @@ placeholders, untrusted URLs, consent default). Published `.json`:
 review the rest by hand:
 
 - **Type & order**: is `manifest-type` right (Personalization vs Promo vs Test)?
-  Does execution order match intent? On the page, is the manifest list in the
-  intended priority order?
+  Compare execution order first, then type, across both MEP-native and
+  Target-delivered manifests. Only then check metadata list order for ties.
 - **Experience priority**: are experience columns ordered most-specific/most-
   important first? Remember users get the **first** matching column only.
 - **Selectors**: written against **plain** HTML? Appropriately "goldilocks"?
@@ -153,7 +207,9 @@ Work down this list:
    which previews but doesn't publish to stage/prod. See `conventions.md`
    → *Placement gotchas* / *Manifest name must be a resolvable path*.
 3. **Lost the priority race** — the user matched an earlier experience column,
-   or an earlier manifest in the page's list took precedence.
+   or another manifest ran earlier by execution order, then type (including
+   Target-delivered manifests). Metadata list order only breaks equal-setting
+   ties. See *Priority: MEP vs Target* above and verify the conflicting action.
 4. **Page filter mismatch** — the current path doesn't match the row's
    `page filter` (common with US vs localized `**` patterns).
 5. **Selector miss** — written against the decorated DOM instead of plain HTML,
