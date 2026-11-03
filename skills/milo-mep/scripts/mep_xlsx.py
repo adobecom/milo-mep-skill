@@ -187,7 +187,7 @@ def _patch_cell(xml, ref, value):
     """Replace an existing cell's value in place, preserving its style (`s`)."""
     m = re.search(rf'<c r="{ref}"([^>]*?)(?:/>|>.*?</c>)', xml, re.S)
     if not m:
-        return xml  # template's info value cells all exist, so this is fine
+        raise ValueError(f"Template is missing info value cell {ref}")
     sm = re.search(r'\bs="(\d+)"', m.group(1))
     return xml[:m.start()] + _cell(ref, value, sm.group(1) if sm else None) + xml[m.end():]
 
@@ -203,15 +203,52 @@ def _info_key_rows(template_path):
     return rows
 
 
+def _append_info_rows(xml, values, keyrow):
+    root = ET.fromstring(xml)
+    ns = "{%s}" % _WB_NS["m"]
+    data = root.find(ns + "sheetData")
+    last_row = max(int(row.get("r")) for row in data)
+    style_row = keyrow["manifest-type"]
+    styles = {cell.get("r"): cell.get("s") for cell in data.iter(ns + "c")}
+    additions = []
+    for row_number, (key, value) in enumerate(values.items(), start=last_row + 1):
+        cells = (_cell(f"A{row_number}", key, styles.get(f"A{style_row}"))
+                 + _cell(f"B{row_number}", value, styles.get(f"B{style_row}")))
+        additions.append(f'<row r="{row_number}" spans="1:2">{cells}</row>')
+    xml = xml.replace("</sheetData>", "".join(additions) + "</sheetData>", 1)
+    dimension = root.find(ns + "dimension")
+    if dimension is not None:
+        ref = dimension.get("ref")
+        end = ref.split(":")[-1]
+        match = re.fullmatch(r"([A-Z]+)(\d+)", end)
+        column = match.group(1)
+        if column == "A":
+            column = "B"
+        end_row = max(int(match.group(2)), last_row + len(values))
+        new_ref = f'{ref.split(":")[0]}:{column}{end_row}'
+        xml = xml.replace(f'<dimension ref="{ref}"/>', f'<dimension ref="{new_ref}"/>', 1)
+    return xml
+
+
 def write_manifest(out_path, template_path=_DEFAULT_TEMPLATE,
                    info=None, experiences=None, placeholders=None):
     """Build a manifest by copying the template and rewriting only what changes.
 
     Preserves the readme, styles, conditional formatting, and the dropdowns
-    (x14 data validations). info: {key: value} patches helix-info value cells;
+    (x14 data validations). info: {key: value} patches helix-info value cells
+    and appends supported keys missing from older templates;
     experiences/placeholders: {"columns": [...], "rows": [{header: val}]} (the
     experience column order is the priority order, leftmost highest).
     """
+    keyrow = _info_key_rows(template_path) if info else {}
+    supported_info = {
+        "manifest-type", "manifest-execution-order", "manifest-override-name",
+        "manifest-consent-type", "manifest-country-restriction",
+        "manifest-marketing-action", "manifest-geo-restriction",
+    }
+    unknown = set(info or {}) - set(keyrow) - supported_info
+    if unknown:
+        raise ValueError(f"Unknown info keys: {', '.join(sorted(unknown))}")
     zin = zipfile.ZipFile(template_path)
     name2path = dict(_sheet_paths(zin))
     defaults = None
@@ -242,10 +279,12 @@ def write_manifest(out_path, template_path=_DEFAULT_TEMPLATE,
     if info:
         path = name2path["helix-info"]
         xml = mods.get(path, zin.read(path).decode("utf-8"))
-        keyrow = _info_key_rows(template_path)
         for key, val in info.items():
             if key in keyrow:
                 xml = _patch_cell(xml, f"B{keyrow[key]}", val)
+        missing = {key: val for key, val in info.items() if key not in keyrow}
+        if missing:
+            xml = _append_info_rows(xml, missing, keyrow)
         mods[path] = xml
 
     with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zout:

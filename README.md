@@ -58,10 +58,13 @@ milo-mep-skill/
 ├── skills/
 │   └── milo-mep/               # the skill (this is what gets installed)
 │       ├── SKILL.md            # entry point: orientation + a routing table
-│       ├── references/         # 14 focused docs — read only what a task needs
+│       ├── references/         # focused docs — read only what a task needs
 │       ├── scripts/            # linter, xlsx read/write, source-drift tooling
 │       ├── assets/             # official manifest template + pinned Milo source
 │       └── CHANGELOG.md
+├── tests/                     # offline tool and release regressions
+├── evals/                     # behavioral cases and captured-run grader
+├── scripts/check-release.sh   # shared local/CI gate
 └── README.md
 ```
 
@@ -82,6 +85,7 @@ The skill keeps its surface area out of `SKILL.md` and routes to focused files:
 | `conventions.md` | Adobe-internal naming, folders, localization philosophy, team/Slack |
 | `interpret-output-format.md` | The output shape for interpreting a manifest |
 | `example-manifest.md` | A worked, real end-to-end example |
+| `synthetic-examples.md` | Compact native-personalization, Target/Promo conflict, and missing-localized-fragment patterns |
 | `xlsx-io.md` | Reading/writing `.xlsx` with the bundled `mep_xlsx.py` |
 | `linting.md` | Linter rules and how to run each front-end |
 | `source-notes.md` | Ground truth distilled from the Milo source |
@@ -147,6 +151,21 @@ Once installed it auto-triggers on MEP/Milo-personalization tasks, or invoke it
 explicitly with `/milo-mep`. (Via the Adobe Skills Directory it can also be
 discovered and installed through that site's flow.)
 
+### Release identity and updates
+
+The skill release is recorded in `SKILL.md` frontmatter (`metadata.version`) and
+its opening release label. This is separate from the Milo commit recorded in
+`assets/source/SOURCE_VERSION`. Compare the installed `SKILL.md` version with
+the candidate before troubleshooting stale guidance. Reload/restart the agent
+after updating: a conversation that already loaded a skill can retain its old
+instructions.
+
+Directory installs are copies, not auto-updating links. Before replacing one,
+back it up outside the scanned skills directory and preserve any local edits;
+install the **whole** `skills/milo-mep/` directory, not just `SKILL.md`, so
+references and tools stay aligned. Never overwrite a modified copy blindly.
+The same applies to `~/.agents/skills/milo-mep` and other agent-specific paths.
+
 ---
 
 ## Linting a manifest
@@ -168,13 +187,51 @@ Or open `skills/milo-mep/scripts/lint.html` in a browser and paste the JSON.
 - **Changelog** — notable changes are in
   [`skills/milo-mep/CHANGELOG.md`](skills/milo-mep/CHANGELOG.md).
 
+### Regression and release gates
+
+Requires Node.js 22+ and Python 3.10+; there are no packages to install.
+
+```bash
+./scripts/check-release.sh
+```
+
+The same offline command runs in GitHub Actions on pull requests and pushes to
+`main`. It exercises linter errors and known non-issues, CLI exit behavior,
+XLSX read/write round trips (including leading/middle blank cells), template
+dropdown/style/readme preservation, the vendored reader without site packages,
+evaluation-fixture/grader controls, installed version consistency, exact
+archive contents and symlink rejection. Packaging checks run in temporary
+copies, not the working tree. `build-lint-html.mjs --check` detects stale
+generated HTML **without rewriting it**.
+
+These are deterministic regressions, **not evidence that an agent activated
+or answered correctly**. [`evals/README.md`](evals/README.md) defines a separate
+fresh-conversation behavioral gate with blind prompts, actual activation
+traces, captured answers, model/release identity, and manual rubric review.
+Run it on supported hosts before distributing instruction/behavior changes.
+
+Before a release:
+
+1. Check source drift and review any affected grounded guidance.
+2. Update `metadata.version`, the opening release label, and the changelog.
+3. Run `./scripts/check-release.sh` and the behavioral gate; record both results
+   separately. Do not call reference-answer grader tests a model evaluation.
+4. Build the archive if needed, back up and refresh directory installs, then
+   restart the agent and check the installed version.
+
+Shared-file inspection is read-only by default. Live writes require explicit
+user authorization and a destination freshness check; previewing/publishing
+requires separate authorization. Examples and evaluation runs do not grant
+permission to change live content.
+
 ### Packaging for manual distribution
 
 Run `./package-milo-mep.sh` from the repository root (requires Python 3).
 The script also works when invoked by path from another directory. It creates
 `milo-mep.skill` at the repository root: a ZIP archive containing the
 `milo-mep/` directory, including references, scripts, vendored dependencies,
-and assets. Hidden files, evals, Python caches, and existing `.skill` archives
+and assets. Repository tests/evals are not part of the installed skill. Hidden
+files, nested evals, Python caches, and existing `.skill` archives
 are excluded; symlinks are rejected.
 
 Share the archive with users whose tools accept `.skill` uploads, or unzip it

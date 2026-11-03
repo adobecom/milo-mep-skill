@@ -48,8 +48,11 @@ python scripts/mep_xlsx.py write --out new-manifest.xlsx --spec spec.json
 }
 ```
 
-- **`info`** sets the value column for matching keys in `helix-info`; the
-  STEP-instruction column is preserved.
+- **`info`** sets the value column for matching keys in `helix-info`; supported
+  keys missing from older templates (including `manifest-consent-type` and
+  `manifest-country-restriction`) are appended as styled key/value rows.
+  Unknown keys absent from the template raise an error instead of being
+  silently ignored. The STEP-instruction column is preserved.
 - **`experiences.columns`** is the ordered header row — **order = experience
   priority** (leftmost highest). Rename the default `all` column or add
   experience columns here (e.g. `target-…`, `param-view=…`, device tags).

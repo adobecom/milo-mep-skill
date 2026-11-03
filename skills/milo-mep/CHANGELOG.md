@@ -5,6 +5,25 @@ runtime.)
 
 ## 2026-11-03
 
+**Skill release 1.1.0 — reliability and distribution**
+- Added an installed release identifier in `SKILL.md`, separate from the Milo
+  runtime source pin. Preserved the installed concise activation description,
+  keeping it within the Agent Skills description length limit.
+- Added offline linter/CLI, XLSX round-trip, template-preservation, archive,
+  release-identity, and generated-browser freshness regressions with a shared
+  local/CI release gate.
+- Added 14 behavioral evaluation cases with blind prompt export, captured-run
+  grading, negative controls, evidence, and mandatory manual rubric review.
+  Grader fixture tests are explicitly not live model evaluation results.
+- Made shared-content inspection read-only by default; require explicit
+  authorization for writes and separate preview/publish/move/delete operations,
+  with destination freshness checks and confirmation of tool success.
+- Added compact synthetic native-personalization, Target/Promo priority, and
+  missing-localized-fragment examples.
+- Fixed XLSX authoring silently omitting consent/country keys absent from the
+  official template: supported missing info keys are appended without
+  rebuilding the workbook; unknown keys now fail explicitly.
+
 **MEP vs Target priority**
 - Added an explicit cross-source answer: Execution Order first, then Type
   (`Personalization` before `Promo` when execution order ties), with examples
