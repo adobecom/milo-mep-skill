@@ -5,6 +5,18 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.3 — placeholder rendering correction (candidate)**
+- Corrected empty placeholder guidance: the selected value is stored empty,
+  but MEP's truthy-only replacement leaves the literal token unchanged.
+  Other page placeholder pipelines require separate verification.
+- Reinforced concrete proposed examples, authored/plain-HTML matching,
+  destination-specific permission reporting, and placeholder QA outcomes.
+- Made evaluation patterns accept equivalent wording and Markdown tables,
+  with adverse controls and unchanged mandatory manual/trace checks.
+- Added explicit historical regrading without relabeling original captures.
+  Regrading 1.1.2 answers is not a behavioral evaluation of this candidate;
+  fresh cross-model evaluation remains required before distribution.
+
 **Skill release 1.1.2 — evaluation-driven precision (candidate)**
 - Added reversed-column placeholder counterexamples and an explicit warning
   that the lookup list does not define value-column precedence.

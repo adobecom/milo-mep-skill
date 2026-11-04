@@ -138,7 +138,13 @@ For selected experience `phone`, these two sheet layouts give different results:
 | `key, value, phone` | `hero-copy, General, Phone copy` | `General` |
 | `key, phone, value` | `hero-copy, Phone copy, General` | `Phone copy` |
 
-If `phone` is first and its cell is empty, the result is empty, not `General`.
+If `phone` is first and its cell is empty, the **stored placeholder value**
+is empty, not `General`. That is not a guarantee of empty rendered text:
+MEP's `replacePlaceholders` substitutes only truthy values, so it leaves
+`{{hero-copy}}` unchanged for an empty stored value. This is the inspected
+MEP replacement path, not a claim about every later page placeholder pipeline.
+Do not use a blank placeholder as a reliable way to remove copy; supply the
+intended value or propose an appropriate content/removal action.
 Row matching is independently **per key**, not one winning row for the sheet.
 Verify both page-specific paths and a third fallback path with the intended
 non-default experience; check the rendered `{{hero-copy}}` text, not just

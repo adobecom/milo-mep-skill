@@ -18,6 +18,24 @@ const parsePlaceholders = new Function("matchGlob", "createMartechMetadata", "ha
   matchGlob, () => {}, () => false,
 );
 const config = () => ({ locale: { region: "us", ietf: "en-US" }, mep: {} });
+const replacePlaceholders = new Function(
+  `${section("export function replacePlaceholders(", "const getUpdatedHref =")}; return replacePlaceholders;`,
+)();
+
+test("pinned MEP substitution retains literal tokens for empty stored values", () => {
+  for (const [row, stored, rendered] of [
+    [{ key: "hero-copy", value: "General", phone: "Phone copy" }, "General", "General"],
+    [{ key: "hero-copy", phone: "Phone copy", value: "General" }, "Phone copy", "Phone copy"],
+    [{ key: "hero-copy", phone: "", value: "General" }, "", "{{hero-copy}}"],
+  ]) {
+    const state = config();
+    parsePlaceholders([row], state, "phone", "/example/tool");
+    assert.equal(state.placeholders["hero-copy"], stored);
+    assert.equal(replacePlaceholders("{{hero-copy}}", state.placeholders), rendered);
+    assert.equal(replacePlaceholders("Before {{hero-copy}} after", state.placeholders),
+      `Before ${rendered} after`);
+  }
+});
 
 test("pinned runtime normalizes trusted origins but retains query and other hash content", () => {
   const normalize = new Function("getConfig", "isDamContent",

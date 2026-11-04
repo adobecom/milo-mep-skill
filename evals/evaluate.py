@@ -30,7 +30,7 @@ def load_cases():
     return cases
 
 
-def grade(cases, capture):
+def grade(cases, capture, *, evaluated_skill_version=None):
     if not isinstance(capture, dict) or not isinstance(capture.get("run"), dict):
         raise ValueError("capture must contain a run object")
     if not isinstance(capture.get("responses"), list):
@@ -40,8 +40,11 @@ def grade(cases, capture):
             raise ValueError(f"run.{key} is required")
     skill = (ROOT / "skills/milo-mep/SKILL.md").read_text()
     version = re.search(r'^  version: "([^"]+)"$', skill, re.M).group(1)
-    if capture["run"]["skill_version"] != version:
-        raise ValueError(f"capture is for a different skill release; expected {version}")
+    expected_version = evaluated_skill_version if evaluated_skill_version is not None else version
+    if not isinstance(expected_version, str) or not expected_version.strip():
+        raise ValueError("evaluated skill version must be nonempty")
+    if capture["run"]["skill_version"] != expected_version:
+        raise ValueError(f"capture is for a different skill release; expected {expected_version}")
     responses = {}
     for response in capture["responses"]:
         if not isinstance(response, dict) or not isinstance(response.get("id"), str):
@@ -58,13 +61,15 @@ def grade(cases, capture):
         if type(response.get("activated")) is not bool or not isinstance(response.get("answer"), str):
             raise ValueError(f"{case['id']}: activated must be boolean and answer must be text")
         failed = []
+        # Ignore presentation delimiters, not words or table structure.
+        check_text = re.sub(r"[`*]", "", response["answer"])
         if response["activated"] != case["activate"]:
             failed.append("activation")
         for pattern in case["checks"]:
-            if not re.search(pattern, response["answer"], re.I | re.S):
+            if not re.search(pattern, check_text, re.I | re.S):
                 failed.append(f"missing concept: {pattern}")
         for pattern in case["reject"]:
-            if re.search(pattern, response["answer"], re.I | re.S):
+            if re.search(pattern, check_text, re.I | re.S):
                 failed.append(f"forbidden assertion: {pattern}")
         automatic = not failed
         if not isinstance(response.get("activation_evidence"), str) or not response["activation_evidence"].strip():
@@ -97,7 +102,11 @@ def grade(cases, capture):
             "completeness_pass": response.get("completeness_pass") is True,
             "pass": not failed, "failures": failed,
         })
-    return {"run": capture["run"], "passed": all(r["pass"] for r in results), "results": results}
+    return {
+        "run": capture["run"], "grading_skill_version": version,
+        "historical_regrade": expected_version != version,
+        "passed": all(r["pass"] for r in results), "results": results,
+    }
 
 
 def main():
@@ -105,13 +114,18 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--prompts", action="store_true", help="export IDs and prompts only (no expected answers)")
     mode.add_argument("--responses", type=Path, help="grade a complete captured run")
+    parser.add_argument("--evaluated-skill-version",
+                        help="explicit original version for historical regrading; never relabels a capture")
     args = parser.parse_args()
     try:
         cases = load_cases()
+        if args.evaluated_skill_version is not None and not args.responses:
+            raise ValueError("--evaluated-skill-version requires --responses")
         if args.prompts:
             print(json.dumps([{"id": c["id"], "prompt": c["prompt"]} for c in cases], indent=2))
             return 0
-        report = grade(cases, json.loads(args.responses.read_text()))
+        report = grade(cases, json.loads(args.responses.read_text()),
+                       evaluated_skill_version=args.evaluated_skill_version)
         print(json.dumps(report, indent=2))
         return 0 if report["passed"] else 1
     except (OSError, ValueError, KeyError, TypeError) as error:

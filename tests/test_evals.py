@@ -65,6 +65,74 @@ class EvalTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertTrue(any("forbidden assertion" in f for r in result["results"] for f in r["failures"]))
 
+    def test_equivalent_prose_and_markdown_tables_pass_concept_checks(self):
+        examples = {
+            "implicit-phone-hero": "Personalization: replace | any-marquee | phone. The page doesn't need `target on`.",
+            "manifest-priority": "Both use Normal execution order. Personalization precedes Promo for this fragment selector, regardless of Target. Change helix-info to First.",
+            "execution-before-type": "Yes, First sorts before Normal. Compare execution order first, then type only if execution order ties.",
+            "consent-defaults": "Default personalized offer requires performance and advertising; promo scheduling metadata uses promo or no offer changes.",
+            "plain-html-selector": "Use updateAttribute | any-marquee primary-cta href against authored HTML before decoration.",
+            "experience-column-priority": "The first matching column wins. Move the columns: `phone | desktop | all`.",
+            "page-scoped-placeholder-history": "Current source supports page filter rows for hero-copy: /example/tool-a, /example/tool-b. First matching row wins. A blank-filter row matches every page, so put the general row last. Select non-default.",
+            "placeholder-column-order": "| Sheet | Column picked | Text |\n| A | value | **`General`** |\n| B | phone | **`Phone copy`** |\n| C | phone | empty stored value |\nSheet column order wins, not valueNames order; MEP leaves literal {{hero-copy}}.",
+            "heldout-placeholder-column-transfer": "General A / General subtitle; then Titel A / Untertitel. Each key is independent. Column choice is first eligible, left to right in the sheet.",
+            "heldout-fragment-lifecycle-conflict": "Manifest order does not serialize work: commands run as each fragment loads. Use a unique selector and verify with ?mep.",
+            "existing-mas-studio-href": "updateAttribute | a[href*=\"query=11111111-1111-4111-8111-111111111111\"] href #_include-fragments. Target the authored field link. Inspect href with ?mep.",
+            "class-attribute-replacement": "updateAttribute | any-marquee class | marquee small dark. Complete class value, authored HTML. Verify with ?mep.",
+        }
+        for case_id, answer in examples.items():
+            with self.subTest(case=case_id):
+                capture = copy.deepcopy(self.capture)
+                response = next(r for r in capture["responses"] if r["id"] == case_id)
+                response["answer"] = answer
+                result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == case_id)
+                self.assertTrue(result["automatic_pass"], result["failures"])
+
+    def test_table_predictions_still_reject_wrong_outputs_and_missing_literal(self):
+        answer = ("| A | value | General |\n| B | phone | Phone copy |\n"
+                  "| C | phone | empty stored value |\n"
+                  "Sheet column order wins, not valueNames order; MEP leaves literal {{hero-copy}}.")
+        for incorrect in (
+            answer.replace("| General |", "| Phone copy |"),
+            answer.replace("| Phone copy |", "| General |"),
+            answer.replace("MEP leaves literal {{hero-copy}}", "C renders empty text"),
+        ):
+            capture = copy.deepcopy(self.capture)
+            response = next(r for r in capture["responses"] if r["id"] == "placeholder-column-order")
+            response["answer"] = incorrect
+            result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == response["id"])
+            self.assertFalse(result["automatic_pass"])
+
+    def test_formatting_does_not_hide_forbidden_assertions(self):
+        response = next(r for r in self.capture["responses"] if r["id"] == "manifest-priority")
+        response["answer"] += " Target **always wins**."
+        result = grade(self.cases, self.capture)
+        self.assertTrue(any("forbidden assertion" in f for r in result["results"] for f in r["failures"]))
+
+    def test_correct_tokens_do_not_excuse_explicit_placeholder_contradictions(self):
+        for claim in ("A blank cell falls back to General.", "C renders empty text."):
+            capture = copy.deepcopy(self.capture)
+            response = next(r for r in capture["responses"] if r["id"] == "placeholder-column-order")
+            response["answer"] += f" {claim}"
+            result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == response["id"])
+            self.assertFalse(result["automatic_pass"])
+            self.assertTrue(any("forbidden assertion" in f for f in result["failures"]))
+
+    def test_historical_regrade_is_explicit_and_never_relabels_capture(self):
+        capture = copy.deepcopy(self.capture)
+        capture["run"]["skill_version"] = "1.1.2"
+        with self.assertRaises(ValueError):
+            grade(self.cases, capture)
+        original = copy.deepcopy(capture)
+        result = grade(self.cases, capture, evaluated_skill_version="1.1.2")
+        self.assertTrue(result["historical_regrade"])
+        self.assertEqual(result["run"]["skill_version"], "1.1.2")
+        self.assertEqual(result["grading_skill_version"], self.capture["run"]["skill_version"])
+        self.assertEqual(capture, original)
+        for invalid in ("", " ", "different", 1):
+            with self.assertRaises(ValueError):
+                grade(self.cases, capture, evaluated_skill_version=invalid)
+
     def test_automatic_match_cannot_substitute_for_rubric_review(self):
         self.capture["responses"][0].pop("correctness_pass")
         self.capture["responses"][0]["review_notes"] = ""
@@ -152,6 +220,27 @@ class EvalTests(unittest.TestCase):
                 response["da_tool_calls"].append({"name": "da_publish_content", "arguments": {}})
             result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == response["id"])
             self.assertFalse(result["pass"], variant)
+
+    def test_cli_historical_regrade_retains_failed_manual_review(self):
+        capture = copy.deepcopy(self.capture)
+        capture["run"]["skill_version"] = "1.1.2"
+        capture["responses"][0]["completeness_pass"] = False
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "historical.json"
+            path.write_text(json.dumps(capture))
+            command = [sys.executable, str(ROOT / "evals/evaluate.py"), "--responses", str(path)]
+            self.assertEqual(subprocess.run(command, capture_output=True).returncode, 2)
+            result = subprocess.run(command + ["--evaluated-skill-version", "1.1.2"],
+                                    text=True, capture_output=True)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(report["historical_regrade"])
+            self.assertFalse(report["results"][0]["completeness_pass"])
+            self.assertEqual(report["run"], capture["run"])
+        result = subprocess.run([sys.executable, str(ROOT / "evals/evaluate.py"),
+                                 "--prompts", "--evaluated-skill-version", "1.1.2"],
+                                capture_output=True)
+        self.assertEqual(result.returncode, 2)
 
     def test_cli_exports_blind_prompts_and_reports_failures(self):
         command = [sys.executable, str(ROOT / "evals/evaluate.py")]
