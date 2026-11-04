@@ -181,6 +181,18 @@ class EvalTests(unittest.TestCase):
                     result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == case_id)
                     self.assertFalse(result["automatic_pass"])
 
+    def test_exactly_one_element_is_a_uniqueness_check(self):
+        response = next(r for r in self.capture["responses"] if r["id"] == "heldout-fragment-lifecycle-conflict")
+        response["answer"] = (
+            "Manifest sorting does not serialize fragment lifecycle work. "
+            "Check that this selector matches exactly one intended element in the plain HTML "
+            "of the fragment that actually loads. Verify with Highlight Changes."
+        )
+        self.assertTrue(grade(self.cases, self.capture)["passed"])
+        response["answer"] = response["answer"].replace("exactly one", "two")
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertFalse(result["automatic_pass"])
+
     def test_existing_audience_actions_must_not_be_blanked(self):
         response = next(r for r in self.capture["responses"] if r["id"] == "implicit-firefox-hide")
         original = response["answer"]
