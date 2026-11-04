@@ -5,6 +5,15 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.5 — preserve existing audience actions (candidate)**
+- Clarified that experience selection is manifest-wide and blank cells never
+  inherit another experience's actions.
+- When adding an audience, preserve applicable existing actions or propose an
+  isolated manifest with existing metadata retained and conflicts checked.
+- Added pinned-source coverage and an adverse evaluation control for blanking
+  unrelated rows in an existing manifest.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 **Skill release 1.1.4 — prediction scope and verification (candidate)**
 - Made stored value, MEP substitution, and unverified final page rendering
   distinct in the entry point, including when reading runtime source directly.

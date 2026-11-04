@@ -114,6 +114,16 @@ class EvalTests(unittest.TestCase):
         graded = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
         self.assertFalse(graded["automatic_pass"])
 
+    def test_existing_audience_actions_must_not_be_blanked(self):
+        response = next(r for r in self.capture["responses"] if r["id"] == "implicit-firefox-hide")
+        original = response["answer"]
+        response["answer"] += " Leave unrelated rows blank in the Firefox column."
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertFalse(result["automatic_pass"])
+        response["answer"] = original + " Do not leave unrelated rows blank; preserve applicable existing actions."
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertTrue(result["automatic_pass"], result["failures"])
+
     def test_retains_token_is_accepted_without_waiving_manual_reviews(self):
         response = next(r for r in self.capture["responses"] if r["id"] == "placeholder-column-order")
         response["answer"] = (

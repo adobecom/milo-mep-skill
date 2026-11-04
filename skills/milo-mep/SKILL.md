@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.4"
+  version: "1.1.5"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.4.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.5.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -221,7 +221,13 @@ the specified page with the intended experience selected.
   Prefer simplified selectors (`any-marquee primary-cta`) over brittle chains.
 - **MEP targets the first match by default**; add `#_all` to hit every match.
 - **Experience-column order is priority**; a user gets the first column they
-  match. Put the most specific/important experiences leftmost.
+  match for the entire manifest, not independently per row. Blank cells do
+  **not** inherit actions from `all` or another experience. When adding an
+  audience to an existing manifest, preserve its applicable existing actions
+  in that column; do not advise leaving unrelated rows blank. If existing
+  audience combinations are unknown, propose a separate audience-only manifest
+  for the new change, preserving existing metadata entries and checking
+  cross-manifest conflicts rather than silently dropping other changes.
 - **Phone qualification is not viewport width alone**: mobile-device detection
   **and** (`window.screen.width < 550` **or** `window.screen.height < 550`),
   evaluated at page load. When explaining phone qualification, include the

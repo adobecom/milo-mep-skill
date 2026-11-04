@@ -76,6 +76,14 @@ new attribute value, or blank = no change for this experience).
   qualifies for the **first** column whose header they match; other columns are
   ignored for that user.
 - A blank cell means "this experience makes no change for this row."
+  It does **not** inherit the cell from `all` or any later experience.
+  Selection is once per manifest, not once per row. Adding a Firefox column
+  before `all` and blanking unrelated rows therefore drops those `all` actions
+  for Firefox visitors. Preserve applicable existing row values when extending
+  a manifest. Do not copy `all` blindly if more-specific audiences also apply:
+  inspect their combinations, or put the new isolated change in a separate
+  manifest and preserve the existing metadata list. Verify both the new change
+  and previously applicable unrelated changes.
 - Headers can combine tags with operators (`,` = OR, `&` = AND, `not`), carry a
   `param-` or `target-` prefix, or use an analytics nickname (`nickname: tag`).
   Full tag/operator reference in `personalization-tags.md`.

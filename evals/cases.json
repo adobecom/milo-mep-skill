@@ -15,8 +15,8 @@
       "prompt": "On our Milo /de/creativecloud page, hide the promo banner for Firefox visitors. It has a unique plain-HTML class .promo-banner.",
       "activate": true,
       "checks": ["firefox", "remove", "true", "\\.promo-banner", "/de/creativecloud"],
-      "reject": [],
-      "review": ["Use a scoped remove row and a Firefox experience, not CSS component changes.", "State that the selector must match plain HTML."],
+      "reject": ["(?:^|[.!?]\\s+)(?:Leave|Keep)\\s+(?:the\\s+)?unrelated rows\\s+blank"],
+      "review": ["Use a scoped remove row and a Firefox experience, not CSS component changes.", "State that the selector must match plain HTML.", "Correctness: preserve existing personalization. Blank Firefox cells do not inherit all. If adding a column to an existing manifest, retain applicable unrelated actions and consider other matching audiences; otherwise propose an isolated manifest preserving metadata entries and checking conflicts. Do not advise blanking unrelated rows in an existing manifest."],
       "evidence": ["skills/milo-mep/references/actions.md", "skills/milo-mep/references/selectors.md"],
       "reference_answer": "Use a Firefox experience with remove | .promo-banner | /de/creativecloud | TRUE. Confirm the unique selector in plain HTML, attach the manifest in personalization metadata, then reload with ?mep and Highlight Changes."
     },

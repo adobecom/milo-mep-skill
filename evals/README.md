@@ -41,7 +41,7 @@ Capture format (include every case ID exactly once):
   "run": {
     "model": "actual model ID from host",
     "host": "agent host and version",
-    "skill_version": "1.1.4",
+    "skill_version": "1.1.5",
     "reviewer": "reviewer identifier",
     "date": "2026-11-03"
   },

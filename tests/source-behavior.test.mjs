@@ -157,6 +157,35 @@ const commandKeys = {
   remove: "remove", replace: "replace", analyticIfSeen: "analyticifseen",
   updateAttribute: "updateattribute",
 };
+
+test("pinned runtime skips blank selected-experience cells rather than inheriting all", () => {
+  const parseRow = new Function(
+    "getConfig", "getFileName", "PAGE_URL", "TARGET_EXP_PREFIX", "getSelectorType",
+    "COMMANDS", "SELECTOR_TYPES", "GLOBAL_CMDS", "CREATE_CMDS",
+    `${section("const getVariantInfo =", "export function parseManifestVariants(")}; return getVariantInfo;`,
+  )(
+    config, () => "tool.json", new URL("https://www.adobe.com/example"),
+    "target-", () => "css", { updateattribute: true, remove: true },
+    { fragment: "fragment" }, [], {},
+  );
+  const variants = {
+    firefox: { commands: [], fragments: [] },
+    all: { commands: [], fragments: [] },
+  };
+  const names = Object.keys(variants);
+  const unrelated = {
+    action: "updateAttribute", selector: ".existing-link href",
+    firefox: "", all: "/example/existing-destination",
+  };
+  parseRow(unrelated, names, variants, "/example/tool.json");
+  parseRow({ action: "remove", selector: ".promo-banner", firefox: "TRUE", all: "" },
+    names, variants, "/example/tool.json");
+  assert.deepEqual(variants.firefox.commands.map(({ selector }) => selector), [".promo-banner"]);
+  assert.deepEqual(variants.all.commands.map(({ selector }) => selector), [".existing-link href"]);
+  parseRow({ ...unrelated, firefox: unrelated.all }, names, variants, "/example/tool.json");
+  assert.equal(variants.firefox.commands[1].content, "/example/existing-destination");
+});
+
 const modifySelector = new Function("COMMANDS_KEYS", "SELECTOR_TYPES", "getSelectorType",
   `${section("const updateEndNumber =", "function getSelectedElements(")}; return modifyNonFragmentSelector;`)(
   commandKeys, { twpButtons: "twpButtons" }, () => "css",
