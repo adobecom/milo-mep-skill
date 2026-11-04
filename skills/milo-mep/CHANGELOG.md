@@ -13,6 +13,10 @@ runtime.)
 - Added column-order prediction and held-out transfer evaluations; separated
   required manual correctness and completeness decisions in evaluation reports.
 - Live cross-model behavioral evaluation remains required before distribution.
+- Clarified URL query/hash preservation, existing Target settings, and
+  conditional verification outcomes; discouraged speculative republishing.
+- Added a synthetic MCP source-injection fixture and trace requirements so an
+  answer-only refusal cannot pass as a completed tool-response evaluation.
 
 ## 2026-11-03
 

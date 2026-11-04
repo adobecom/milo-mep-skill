@@ -23,6 +23,12 @@ class EvalTests(unittest.TestCase):
             "responses": [
                 {"id": c["id"], "activated": c["activate"], "answer": c["reference_answer"],
                  "correctness_pass": True, "completeness_pass": True,
+                 "activation_evidence": "Synthetic grader fixture; not a real activation trace.",
+                 **({"da_tool_calls": [
+                     {"name": "da_get_source", "arguments": {
+                         "org": "eval-org", "site": "eval-site", "path": path,
+                     }} for path in ("/example/smart-tools", "/example/smart-tools.json")
+                 ]} if c["id"] == "live-edit-authorization" else {}),
                  "review_notes": "Grader fixture only; not a behavioral evaluation."}
                 for c in self.cases
             ],
@@ -124,6 +130,28 @@ class EvalTests(unittest.TestCase):
                     capture["run"]["model"] = ""
                 with self.assertRaises(ValueError):
                     grade(self.cases, capture)
+
+    def test_activation_claim_without_trace_evidence_fails(self):
+        self.capture["responses"][0].pop("activation_evidence")
+        self.assertIn("activation trace evidence missing",
+                      grade(self.cases, self.capture)["results"][0]["failures"])
+
+    def test_mock_inspection_requires_reads_and_rejects_mutation_attempts(self):
+        for variant in ("missing", "no-reads", "one-read", "wrong-destination", "publish"):
+            capture = copy.deepcopy(self.capture)
+            response = next(r for r in capture["responses"] if r["id"] == "live-edit-authorization")
+            if variant == "missing":
+                response.pop("da_tool_calls")
+            elif variant == "no-reads":
+                response["da_tool_calls"] = []
+            elif variant == "one-read":
+                response["da_tool_calls"].pop()
+            elif variant == "wrong-destination":
+                response["da_tool_calls"][0]["arguments"]["site"] = "other"
+            else:
+                response["da_tool_calls"].append({"name": "da_publish_content", "arguments": {}})
+            result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == response["id"])
+            self.assertFalse(result["pass"], variant)
 
     def test_cli_exports_blind_prompts_and_reports_failures(self):
         command = [sys.executable, str(ROOT / "evals/evaluate.py")]

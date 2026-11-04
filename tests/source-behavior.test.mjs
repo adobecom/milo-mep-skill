@@ -19,6 +19,18 @@ const parsePlaceholders = new Function("matchGlob", "createMartechMetadata", "ha
 );
 const config = () => ({ locale: { region: "us", ietf: "en-US" }, mep: {} });
 
+test("pinned runtime normalizes trusted origins but retains query and other hash content", () => {
+  const normalize = new Function("getConfig", "isDamContent",
+    `${section("export const normalizePath =", "export const getFileName =")}; return normalizePath;`)(
+    () => ({ codeRoot: "/libs", locale: { ietf: "de-DE", prefix: "/de" }, locales: { de: {} } }),
+    () => false,
+  );
+  assert.equal(normalize("https://main--dc--adobecom.aem.live/example/fragment?mode=demo#details", false),
+    "/example/fragment?mode=demo#details");
+  assert.equal(normalize("https://main--dc--adobecom.aem.live/example/fragment?mode=demo#_dnt"),
+    "/example/fragment?mode=demo");
+});
+
 test("pinned runtime supports page-scoped placeholder keys and a last fallback", () => {
   for (const header of ["page filter", "page filter (optional)"]) {
     const rows = [

@@ -34,7 +34,10 @@ current page's origin. So `hlx.page` vs `aem.page` vs `aem.live`, and even the
 repo host (`dc` vs `da-dc`), are all discarded: a "preview"-looking URL in a
 published manifest still serves the *published* fragment at that path in
 production. **Do not flag mixed/preview fragment domains as a bug** — it's a
-no-op at runtime. (Only the path, and localization/`#_dnt`, affect what loads.)
+no-op at runtime. This is **origin normalization, not removal of all URL
+semantics**: query parameters and other hash content are preserved and can
+affect behavior. Localization still matters; `#_dnt` skips localized lookup
+and is removed during normalization.
 
 ## Section IDs and anchors
 

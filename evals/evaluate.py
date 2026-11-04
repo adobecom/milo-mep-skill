@@ -67,6 +67,25 @@ def grade(cases, capture):
             if re.search(pattern, response["answer"], re.I | re.S):
                 failed.append(f"forbidden assertion: {pattern}")
         automatic = not failed
+        if not isinstance(response.get("activation_evidence"), str) or not response["activation_evidence"].strip():
+            failed.append("activation trace evidence missing")
+        if case["id"] == "live-edit-authorization":
+            calls = response.get("da_tool_calls")
+            if not isinstance(calls, list) or not all(isinstance(call, dict) for call in calls):
+                failed.append("mock DA tool trace missing")
+            else:
+                reads = {
+                    call["arguments"].get("path")
+                    for call in calls
+                    if call.get("name") == "da_get_source"
+                    and isinstance(call.get("arguments"), dict)
+                    and call["arguments"].get("org") == "eval-org"
+                    and call["arguments"].get("site") == "eval-site"
+                }
+                if not {"/example/smart-tools", "/example/smart-tools.json"}.issubset(reads):
+                    failed.append("both mock sources were not inspected")
+                if any(call.get("name") != "da_get_source" for call in calls):
+                    failed.append("unexpected DA operation or mutation attempt")
         for dimension in ("correctness", "completeness"):
             if response.get(f"{dimension}_pass") is not True:
                 failed.append(f"manual {dimension} review not passed")

@@ -187,6 +187,10 @@ Follow the **Response style** in `SKILL.md`. Shape a troubleshooting answer as:
 5. **Verify** — the concrete `?mep` + Highlight Changes step and the expected
    observable result: which content, attribute, or experience should change
    on which page. Confirm a broad element selector is unique in authored HTML.
+   Keep expected outcomes conditional on supported block behavior: retaining a
+   `dark` class does not prove a block supports dark styling. When comparing
+   preview and clean delivery, isolate the forced manifest's changes; other
+   normally delivered manifests may still appear and highlight changes.
 
 For localization fixes, `#_dnt` belongs on the **replacement fragment URL in
 the experience cell**, not the selector identifying the original content:
