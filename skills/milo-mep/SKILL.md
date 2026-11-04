@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.5"
+  version: "1.1.6"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.5.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.6.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -118,6 +118,12 @@ these for every response:
   name the page, selected experience, and expected text or attribute. A correct
   output table is not a verification step. When comparing column layouts,
   verify each layout on the supplied page with the supplied experience selected.
+- **For an additive change, verify preservation too.** If proposing a separate
+  manifest alongside existing ones, explicitly tell the author to check
+  overlapping selectors/actions and row filters, with execution/type ordering
+  in mind. Then verify both the new result and unchanged unrelated existing
+  personalization for the affected audience. A separate manifest avoids
+  experience-column inheritance problems; it does not prove conflict freedom.
 
 **Placeholder predictions:** distinguish the stored value, MEP substitution,
 and final page rendering. An empty stored string leaves the literal token

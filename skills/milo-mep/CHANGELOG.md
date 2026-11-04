@@ -5,6 +5,11 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.6 — additive-change verification (candidate)**
+- Made conflict inspection and preservation QA explicit in the response
+  checklist when proposing an additional manifest, not just in ground rules.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 **Skill release 1.1.5 — preserve existing audience actions (candidate)**
 - Clarified that experience selection is manifest-wide and blank cells never
   inherit another experience's actions.

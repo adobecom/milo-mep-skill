@@ -82,8 +82,11 @@ new attribute value, or blank = no change for this experience).
   for Firefox visitors. Preserve applicable existing row values when extending
   a manifest. Do not copy `all` blindly if more-specific audiences also apply:
   inspect their combinations, or put the new isolated change in a separate
-  manifest and preserve the existing metadata list. Verify both the new change
-  and previously applicable unrelated changes.
+  manifest and preserve the existing metadata list. For that separate manifest,
+  explicitly check other loaded manifests for overlapping selectors/actions
+  and page/country filters; execution/type ordering can affect conflicts.
+  State this check in the proposed fix, then verify both the new change and
+  previously applicable unrelated changes for the affected audience.
 - Headers can combine tags with operators (`,` = OR, `&` = AND, `not`), carry a
   `param-` or `target-` prefix, or use an analytics nickname (`nickname: tag`).
   Full tag/operator reference in `personalization-tags.md`.
