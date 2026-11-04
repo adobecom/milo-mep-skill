@@ -87,6 +87,8 @@ new attribute value, or blank = no change for this experience).
   and page/country filters; execution/type ordering can affect conflicts.
   State this check in the proposed fix, then verify both the new change and
   previously applicable unrelated changes for the affected audience.
+  Do not append "or add this row to an existing manifest" unless you have
+  inspected and explained its audience order and preserved row values.
 - Headers can combine tags with operators (`,` = OR, `&` = AND, `not`), carry a
   `param-` or `target-` prefix, or use an analytics nickname (`nickname: tag`).
   Full tag/operator reference in `personalization-tags.md`.

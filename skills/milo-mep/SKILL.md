@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.6"
+  version: "1.1.7"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.6.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.7.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -200,6 +200,15 @@ page") into concrete rows: set the manifest type, name the file per
 header(s) (rename/add columns beyond the default `all`). Also show it as a table
 the user can paste into Excel, and state the filename and folder it lives in.
 
+**Existing-manifest safety:** do not offer "if a manifest already exists, just
+add this row to it" as an alternative to an isolated manifest. Before advising
+an existing-manifest edit, inspect its experience columns and applicable rows,
+then show how the new audience retains its existing actions and qualifies in
+column order. If that content is unavailable, propose a separate, uniquely
+named manifest (confirm its path is unused), append rather than replace
+metadata entries, and include the conflict/preservation QA above. Existing
+manifests are not interchangeable with a new one-row workbook.
+
 ### 4. QA / troubleshoot
 Build `?mep` preview URLs, reason about why an experience isn't applying
 (priority order, page filter mismatch, wrong selector against **plain** HTML,
@@ -247,6 +256,10 @@ the specified page with the intended experience selected.
   `manifest-type` (`Personalization` → `Promo` → `Test`). Target-delivered
   manifests use the same ordering; Target is not inherently higher priority.
   Metadata list order is only a tie-breaker when both settings are equal.
+  When explaining priority, state all three stages explicitly: execution order,
+  then type, then stable incoming order when both settings tie (first listed
+  stays first among metadata-listed manifests). Do not abbreviate the third
+  stage away just because the supplied example is resolved by type.
   Change these settings in each manifest's `helix-info` sheet, not the drawer.
   See `references/enable-and-qa.md` → *Priority: MEP vs Target*.
 

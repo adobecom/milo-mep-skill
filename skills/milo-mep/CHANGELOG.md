@@ -5,6 +5,14 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.7 — safe authoring alternatives and complete priority (candidate)**
+- Required inspection and preserved audience actions before offering an
+  existing-manifest edit; removed the unsafe one-row fallback for unseen files.
+- Required the stable equal-setting tiebreaker in priority explanations.
+- Accepted equivalent read-only and source-is-not-user-approval wording in
+  grading, with adverse controls; no safety/manual gates were waived.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 **Skill release 1.1.6 — additive-change verification (candidate)**
 - Made conflict inspection and preservation QA explicit in the response
   checklist when proposing an additional manifest, not just in ground rules.

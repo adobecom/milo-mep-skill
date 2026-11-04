@@ -41,7 +41,7 @@ Capture format (include every case ID exactly once):
   "run": {
     "model": "actual model ID from host",
     "host": "agent host and version",
-    "skill_version": "1.1.6",
+    "skill_version": "1.1.7",
     "reviewer": "reviewer identifier",
     "date": "2026-11-03"
   },
@@ -76,6 +76,11 @@ answering system messages** in every case. Only `milo-mep` should be advertised.
 Discard contaminated runs rather than inferring isolation from environment
 variables. Record the evaluated commit and a defined skill-tree hash with the
 capture, in addition to version and actual model/host.
+Pin the entire candidate and harness to an immutable commit fixture before
+launching any cases (for example, extract `git archive <commit>` into a
+session-only directory). Copy every answering fixture from that pinned tree,
+not a live checkout that can advance during a batch. Verify each copied tree's
+hash before answering. Preserve and exclude any mixed-candidate runs.
 
 ### Historical regrading
 
