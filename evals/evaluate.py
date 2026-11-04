@@ -67,11 +67,17 @@ def grade(cases, capture):
             if re.search(pattern, response["answer"], re.I | re.S):
                 failed.append(f"forbidden assertion: {pattern}")
         automatic = not failed
-        if response.get("review_pass") is not True:
-            failed.append("manual rubric review not passed")
+        for dimension in ("correctness", "completeness"):
+            if response.get(f"{dimension}_pass") is not True:
+                failed.append(f"manual {dimension} review not passed")
         if not isinstance(response.get("review_notes"), str) or not response["review_notes"].strip():
             failed.append("manual review notes missing")
-        results.append({"id": case["id"], "automatic_pass": automatic, "pass": not failed, "failures": failed})
+        results.append({
+            "id": case["id"], "automatic_pass": automatic,
+            "correctness_pass": response.get("correctness_pass") is True,
+            "completeness_pass": response.get("completeness_pass") is True,
+            "pass": not failed, "failures": failed,
+        })
     return {"run": capture["run"], "passed": all(r["pass"] for r in results), "results": results}
 
 

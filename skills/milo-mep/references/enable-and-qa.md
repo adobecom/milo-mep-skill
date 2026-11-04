@@ -184,7 +184,15 @@ Follow the **Response style** in `SKILL.md`. Shape a troubleshooting answer as:
 4. **Other things to check** — a short **ranked** list (most→least likely); each
    line: **cause** — how to tell / what to do. Include only plausible ones; stop
    there.
-5. **Verify** — the concrete `?mep` + Highlight Changes step to confirm.
+5. **Verify** — the concrete `?mep` + Highlight Changes step and the expected
+   observable result: which content, attribute, or experience should change
+   on which page. Confirm a broad element selector is unique in authored HTML.
+
+For localization fixes, `#_dnt` belongs on the **replacement fragment URL in
+the experience cell**, not the selector identifying the original content:
+`/example-shared/fragments/alternate-hero#_dnt`. Use it only for intentionally
+unlocalized content. Creating a localized fragment is a proposed fix, not
+permission to write or publish shared content.
 
 Keep it skimmable: bold the label on each point, one idea per line, no repeated
 explanations. Don't dump the whole causes list below — pick the ones that fit
@@ -197,7 +205,9 @@ Work down this list:
 **Before diagnosing a production targeting leak:** compare a clean URL with
 the reported preview URL. A carried `mep=<manifest>--<experience>` parameter
 can explicitly attach/force that manifest on a different page; hiding the
-button does not clear it. See `mep-button.md` → *A manifest appears on the wrong
+button does not clear it. **Row page/country filters still apply.** The forced
+URL alone neither proves nor rules out a production leak; compare normal
+delivery before making that judgment. See `mep-button.md` → *A manifest appears on the wrong
 page after previewing*. For repeated copy that varies by pathname, use the
 page-scoped placeholder rows in `manifest-schema.md` rather than duplicating
 fragments or inventing page-specific audience columns.

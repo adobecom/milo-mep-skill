@@ -60,6 +60,28 @@ test("pinned runtime does not apply manifest placeholders for default experience
   assert.equal(state.placeholders.copy, "Existing global");
 });
 
+test("pinned runtime applies header order and page matching independently per key", () => {
+  for (const [columns, expected] of [
+    [["other", "de-DE", "all"], ["General A", "General subtitle"]],
+    [["de-DE", "all", "other"], ["Titel A", "Untertitel"]],
+  ]) {
+    const state = { locale: { region: "de", ietf: "de-DE" }, mep: {} };
+    const rows = [
+      ["title", "/example/b", "Elsewhere", "Anderswo", "B"],
+      ["title", "/example/a", "General A", "Titel A", "Audience A"],
+      ["subtitle", "/example/a", "General subtitle", "Untertitel", "Audience subtitle"],
+    ].map(([key, filter, other, locale, all]) => {
+      const values = { other, "de-DE": locale, all };
+      return Object.fromEntries([
+        ["key", key], ["page filter", filter],
+        ...columns.map((column) => [column, values[column]]),
+      ]);
+    });
+    parsePlaceholders(rows, state, "all", "/example/a");
+    assert.deepEqual([state.placeholders.title, state.placeholders.subtitle], expected);
+  }
+});
+
 const combineMepSources = new Function("parseManifestUrlAndAddSource", "isSameOriginManifestPath", "PAGE_URL",
   `${section("export const combineMepSources =", "async function updateManifestsAndPropositions(")}; return combineMepSources;`)(
   () => [], (path) => path.startsWith("/") && !path.startsWith("//"),

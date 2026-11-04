@@ -56,9 +56,9 @@
       "activate": true,
       "checks": ["localiz", "(?:default|original).{0,30}(?:page|content)", "#_dnt", "(?:create|supply|add).{0,60}(?:German|localized|/de)"],
       "reject": ["(?i)automatically\\s+falls?\\s+back\\s+to\\s+(?:the\\s+)?US\\s+(?:replacement|fragment)"],
-      "review": ["Missing local fragment leaves default page content, not the US replacement.", "Use #_dnt only for intentionally unlocalized content; do not create a localized manifest."],
+      "review": ["Correctness: missing local fragment leaves default page content, not the US replacement.", "Correctness: put #_dnt on the replacement fragment URL in the experience cell, not the selector identifying original content; use it only for intentionally unlocalized content.", "Completeness: propose supplying the localized fragment without assuming authorization to publish; verify localized replacement content on the German page. Do not create a localized manifest."],
       "evidence": ["skills/milo-mep/references/synthetic-examples.md", "skills/milo-mep/references/selectors.md"],
-      "reference_answer": "Create the same-named German localized fragment under /de. Missing localized replacement leaves default page content, not the US replacement. Only use #_dnt on the fragment path if intentionally unlocalized content is appropriate. Keep the shared manifest; verify the German path and ?mep Highlight Changes."
+      "reference_answer": "Create the same-named German localized fragment under /de through the authorized workflow. Missing localized replacement leaves default page content, not the US replacement. Only put #_dnt on the replacement fragment URL in the experience cell if intentionally unlocalized content is appropriate. Keep the shared manifest; verify the German replacement hero appears on /de/example/smart-tools with ?mep and Highlight Changes."
     },
     {
       "id": "plain-html-selector",
@@ -105,7 +105,7 @@
       "prompt": "An old answer says Milo MEP placeholders cannot vary by page URL. We have one shared fragment with {{hero-copy}} used on /example/tool-a and /example/tool-b, with different copy on each. Does the bundled current source support this without duplicating fragments or adding 30 experience columns? Show the rows and explain fallback order.",
       "activate": true,
       "checks": ["page filter", "hero-copy", "/example/tool-a", "/example/tool-b", "(?:first matching|first.{0,20}row)", "(?:fallback.{0,30}last|scoped.{0,30}before)", "(?:source|parsePlaceholders)", "(?:default|non-default)"],
-      "reject": ["(?i)placeholders\\s+(?:still\\s+)?(?:cannot|can't)\\s+vary\\s+by\\s+page\\s+URL"],
+      "reject": ["(?i)placeholders\\s+(?:still\\s+)?(?:cannot|can't)\\s+vary\\s+by\\s+page\\s+URL", "(?:selected\\s+)?experience\\s*,?\\s*then\\s+locale/country\\s*,?\\s*then\\s+value\\s*,?\\s*then\\s+other"],
       "review": ["Check current parsePlaceholders rather than repeating the historical restriction.", "Show key/page filter/value rows with the same key and unscoped fallback last; missing filters apply everywhere.", "Explain first matching row per key, including blank values, and that default experience skips manifest placeholder overrides."],
       "evidence": ["skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/manifest-schema.md"],
       "reference_answer": "Current source parsePlaceholders supports page filter rows. Use key | page filter | value: hero-copy | /example/tool-a | Copy A; hero-copy | /example/tool-b | Copy B; hero-copy | blank | General. Put the fallback last: first matching row per key wins, even with a blank value. A non-default experience must be selected; default skips manifest placeholder overrides. Verify both paths and a third fallback page with ?mep."
@@ -114,11 +114,32 @@
       "id": "preview-cross-page-override",
       "prompt": "After previewing /example/tool?mep=%2Fexample%2Ftool.json--all, I navigated to /de/example/other with the same query. The manifest still appears, even with mepButton=off. That page has no personalization metadata. Is this a production geo-targeting leak?",
       "activate": true,
-      "checks": ["(?:force|explicit|inject|attach|load)", "(?:clean|remove|clear)", "\\?mep", "mepButton=off", "(?:hide|hidden)", "(?:filter|normal delivery|metadata)"],
+      "checks": ["(?:force|explicit|inject|attach|load)", "(?:clean|remove|clear)", "\\?mep", "mepButton=off", "(?:hide|hidden)", "(?:row|page|country).{0,30}filters.{0,30}(?:still|apply|remain)"],
       "reject": ["(?i)mepButton=off\\s+(?:disables|clears)\\s+(?:all\\s+)?(?:MEP|overrides|personalization)", "(?i)definitely\\s+(?:a\\s+)?production\\s+(?:geo|targeting)\\s+leak"],
       "review": ["Explain that a nonempty mep parameter can attach a manifest even without metadata and force an experience; row filters still apply.", "Compare a clean URL and bare ?mep before modifying live targeting.", "Hiding the button is not clearing the forced manifest; do not jump to publishing changes or clearing all browser storage."],
       "evidence": ["skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/mep-button.md"],
       "reference_answer": "Not enough evidence for a production leak: the nonempty ?mep parameter explicitly loads the manifest and forces all even without metadata. Row filters still apply. mepButton=off only hides the panel. Remove the forced value and compare the clean URL, then use bare ?mep to inspect normal delivery and Highlight Changes."
+    },
+    {
+      "id": "placeholder-column-order",
+      "prompt": "For a loaded Milo MEP manifest with phone selected, predict {{hero-copy}} for each helix-placeholders sheet: A has columns key,value,phone and row hero-copy,General,Phone copy; B has columns key,phone,value and row hero-copy,Phone copy,General; C has columns key,phone,value and row hero-copy,(empty cell),General. Does the valueNames list in parsePlaceholders impose an experience-over-value priority?",
+      "activate": true,
+      "checks": ["A\\s*[:=]\\s*General", "B\\s*[:=]\\s*Phone copy", "C\\s*[:=]\\s*(?:empty|blank)", "(?:sheet|column).{0,20}order", "valueNames"],
+      "reject": ["(?:selected\\s+)?experience\\s*,?\\s*then\\s+locale/country\\s*,?\\s*then\\s+value\\s*,?\\s*then\\s+other", "experience\\s+(?:always\\s+)?(?:wins|takes precedence)\\s+over\\s+value"],
+      "review": ["Correctness: predict A=General, B=Phone copy, C=empty; no automatic category ranking or per-cell fallback.", "Correctness: valueNames is an eligibility list; first eligible header in actual sheet order wins.", "Completeness: explain all three outputs and verify the rendered placeholder using a non-default experience."],
+      "evidence": ["skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/manifest-schema.md"],
+      "reference_answer": "A: General. B: Phone copy. C: empty. parsePlaceholders uses sheet column order to find the first eligible header; valueNames is an eligibility list, not a ranking. A blank chosen cell does not fall back. Verify the rendered hero-copy text for each sheet with phone selected via ?mep and Highlight Changes."
+    },
+    {
+      "id": "heldout-placeholder-column-transfer",
+      "split": "holdout",
+      "prompt": "A loaded Milo MEP manifest selects all on /example/a. Page locale is de-DE, region de. Its placeholder columns, in order, are key, page filter, other, de-DE, all. Rows: title | /example/b | Elsewhere | Anderswo | B; title | /example/a | General A | Titel A | Audience A; subtitle | /example/a | General subtitle | Untertitel | Audience subtitle. Which title and subtitle values render? Now move other after all, leaving every cell with its original column: what renders? Does choosing a title row discard the subtitle row?",
+      "activate": true,
+      "checks": ["General A", "General subtitle", "Titel A", "Untertitel", "(?:per key|each key)", "(?:sheet|column).{0,20}order"],
+      "reject": ["(?:selected\\s+)?experience\\s*,?\\s*then\\s+locale/country\\s*,?\\s*then\\s+value\\s*,?\\s*then\\s+other"],
+      "review": ["Correctness: original outputs are General A and General subtitle; /example/b does not consume title.", "Correctness: after reordering outputs are Titel A and Untertitel because de-DE precedes all; do not predict Audience A/Audience subtitle.", "Correctness: first matching row applies separately per key, preserving subtitle.", "Completeness: explain both column layouts and verify both rendered strings on /example/a with all selected."],
+      "evidence": ["skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "Initially title=General A and subtitle=General subtitle: other is first eligible in sheet column order. After moving other after all, title=Titel A and subtitle=Untertitel because de-DE precedes all. Row matching is per key; the /example/b row is skipped and choosing title does not discard subtitle. Verify both rendered strings on /example/a with all selected using ?mep and Highlight Changes."
     },
     {
       "id": "heldout-fragment-lifecycle-conflict",

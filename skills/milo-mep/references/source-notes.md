@@ -243,6 +243,7 @@ value does not fall through. Nonmatching rows do not consume the key.
 
 Value selection uses the **first eligible header in sheet column order**,
 not the order of the `valueNames` lookup list and not a per-cell fallback.
+Do not paraphrase that list as experience > locale/country > value > other.
 Experience/locale/country, `value`, and `other` headers can qualify. Put
 specific value columns before generic columns if they should win. A selected
 `default` experience skips manifest placeholder overrides entirely.

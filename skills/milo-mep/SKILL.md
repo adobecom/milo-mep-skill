@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.1"
+  version: "1.1.2"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.1.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.2.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -180,6 +180,10 @@ linter (`node scripts/lint.mjs <json|URL>` or `scripts/lint.html`; xlsx via
 the answer in the **troubleshooting answer format**
 (Verdict → fix-as-code → brief Why → ranked "other things to check" → Verify)
 and the causes menu — both in `references/enable-and-qa.md`.
+Always finish actionable authoring/troubleshooting answers with one observable
+check: the expected content, attribute, or selected experience on the relevant
+page. `?mep` + Highlight Changes alone is not the expected result. Confirm
+element selectors are unique in authored HTML before recommending a broad edit.
 
 ## Ground rules that prevent most mistakes
 

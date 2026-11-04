@@ -3,6 +3,17 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
+## 2026-11-04
+
+**Skill release 1.1.2 — evaluation-driven precision (candidate)**
+- Added reversed-column placeholder counterexamples and an explicit warning
+  that the lookup list does not define value-column precedence.
+- Reinforced replacement-URL `#_dnt` placement, preview filter boundaries,
+  unique authored selectors, and observable QA outcomes.
+- Added column-order prediction and held-out transfer evaluations; separated
+  required manual correctness and completeness decisions in evaluation reports.
+- Live cross-model behavioral evaluation remains required before distribution.
+
 ## 2026-11-03
 
 **Skill release 1.1.1 — source-verified troubleshooting**

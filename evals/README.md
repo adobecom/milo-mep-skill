@@ -1,6 +1,6 @@
 # Skill behavioral evaluations
 
-`cases.json` covers activation (including implicit MEP requests and negative
+The 21 cases in `cases.json` cover activation (including implicit MEP requests and negative
 examples), priority, consent defaults, localization, selectors, experience
 order, trusted fragment hosts, live-edit authorization, page-scoped
 placeholders, forced-preview carry-over, class-attribute replacement, and
@@ -41,7 +41,7 @@ Capture format (include every case ID exactly once):
   "run": {
     "model": "actual model ID from host",
     "host": "agent host and version",
-    "skill_version": "1.1.1",
+    "skill_version": "1.1.2",
     "reviewer": "reviewer identifier",
     "date": "2026-11-03"
   },
@@ -50,7 +50,8 @@ Capture format (include every case ID exactly once):
       "id": "implicit-phone-hero",
       "activated": true,
       "answer": "Verbatim captured agent answer",
-      "review_pass": true,
+      "correctness_pass": true,
+      "completeness_pass": true,
       "review_notes": "Evidence for each rubric item, including tool behavior."
     }
   ]
@@ -63,6 +64,24 @@ known adverse advice; **they are not a semantic judge**. A correct paraphrase
 may need a reviewed pattern update. Keyword-stuffed or contradictory answers
 must fail the manual rubric even when patterns pass. Negative-case answers are
 not content-graded: the observed activation decision is what matters.
+
+Record two independent manual decisions: `correctness_pass` means the factual
+claims, output values, and proposed actions agree with the evidence;
+`completeness_pass` means all requested deliverables and applicable rubric
+requirements are covered, including a concrete expected QA result. Explain
+both in `review_notes`. A polished but wrong answer fails correctness; a
+correct answer missing required verification fails completeness. Reports show
+both manual decisions separately from automatic pattern checks; neither
+manual decision can override an automatic failure. Both must be literal
+`true` for a case to pass. The former `review_pass` field alone is insufficient.
+
+For a cross-model comparison, use fresh conversations with the same candidate
+installed and record actual activation traces. Run affected cases first, then
+the complete suite. Preserve the supplied 1.1.1 answers as an answer-only
+baseline outside Git; they lack activation traces and are not complete runs.
+The placeholder column-order holdout is not a worked example in the skill:
+keep its prompt and expected answer out of answering-agent context until the
+test. Evaluate it in a separate fresh conversation.
 
 Exit codes: `0` all checks and rubric reviews pass, `1` at least one failure or
 unreviewed case, `2` invalid/incomplete/stale-release input. Keep raw traces and

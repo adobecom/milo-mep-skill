@@ -129,6 +129,21 @@ matching the selected experience, locale/country, `value`, or `other` is used.
 The same column is read for all matching rows; blank cells do not trigger a
 per-cell fallback to a later value column.
 
+**The `valueNames` lookup list is not a precedence order.** There is no
+automatic "experience, then locale/country, then value, then other" ranking.
+For selected experience `phone`, these two sheet layouts give different results:
+
+| sheet column order | row values in that order | selected text |
+|---|---|---|
+| `key, value, phone` | `hero-copy, General, Phone copy` | `General` |
+| `key, phone, value` | `hero-copy, Phone copy, General` | `Phone copy` |
+
+If `phone` is first and its cell is empty, the result is empty, not `General`.
+Row matching is independently **per key**, not one winning row for the sheet.
+Verify both page-specific paths and a third fallback path with the intended
+non-default experience; check the rendered `{{hero-copy}}` text, not just
+whether the manifest appears in the panel.
+
 Older advice that placeholders cannot vary by page URL predates this behavior.
 Confirm the deployed Milo version if a site does not support these columns.
 Source: `parsePlaceholders` and `matchGlob` in `assets/source/personalization.js`.
