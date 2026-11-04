@@ -222,6 +222,15 @@ function lintManifest(m) {
   const defined = new Set(
     (ph.rows || []).map((r) => (r.key || "").trim()).filter(Boolean)
   );
+  const unscopedKeys = new Map();
+  (ph.rows || []).forEach((row, i) => {
+    if (!row.key) return;
+    const filter = row["page filter"] || row["page filter (optional)"];
+    if (unscopedKeys.has(row.key))
+      add("warn", `placeholders row ${i + 1}`, `placeholder '${row.key}' is shadowed by unscoped row ${unscopedKeys.get(row.key)} — the first matching row per key wins, even when its value is blank. Put page-specific rows before the unscoped fallback.`);
+    else if (!filter)
+      unscopedKeys.set(row.key, i + 1);
+  });
 
   // ---- experiences ----
   const exp = sheet(m, "helix-experiences", "experiences");

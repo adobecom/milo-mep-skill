@@ -91,6 +91,9 @@ authoritative 404 results.
 - `updateFramework` value that isn't a foundation code (`c1`/`c2`)
 - undefined `{{placeholder}}`; over-long or non-lowercase-dashed
   `manifest-override-name`
+- placeholder row shadowed by an earlier **unscoped row with the same key**,
+  even when the earlier value is blank. Scoped duplicate keys are valid;
+  put page-specific rows first and the unscoped fallback last.
 
 **Info**: missing `manifest-consent-type` (type-aware consent default);
 override-name on a non-Personalization manifest; US-exact page filter whose

@@ -68,6 +68,34 @@ Write the current names; this table is just for reading old manifests.
 
 ## Value conventions
 
+### Updating an attribute is not replacing link text
+
+An attribute selector such as `a[href*="/example/tool"]` only **finds** an
+element; it does not tell `replace` to edit its URL. Use `updateAttribute` and
+append the plain attribute name:
+
+| action | selector | experience-cell value |
+|---|---|---|
+| `updateAttribute` | `a[href*="/example/tool"] href` | `/example/other-tool` |
+| `updateAttribute` | `any-marquee class` | `marquee dark` |
+
+Use `href` or `class`, **not** `[href]` or `[class]`, for the final attribute
+token. An earlier `[href*=...]` is a valid CSS matching condition. When the
+element is inside a nested fragment, append `#_include-fragments` after the
+attribute; add `#_all` only if all matching elements should change.
+
+Updating `class` replaces the **entire** class attribute; it is not an
+add-class operation. Preserve the existing block name and other required
+variants in the value. Target authored pre-decoration HTML, not classes or
+web components generated later by the block. A generated card's theme may
+require a supported parent-block variant or block-code support; a generic
+`dark` class is not a guarantee of black styling.
+
+Inspect the plain HTML first, then use `?mep` + Highlight Changes and inspect
+the resulting attribute. For M@S Studio links, see `mas-caas-fragments.md`.
+
+### Other values
+
 - **Fragment/content values** are typically **preview URLs** to a fragment
   (e.g. `https://main--<repo>--<org>.aem.page/.../fragments/.../marquee-mobile`).
   A bare integer (e.g. `2`) can be used to reference a fragment index in some

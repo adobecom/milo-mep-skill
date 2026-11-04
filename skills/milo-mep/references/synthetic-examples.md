@@ -27,8 +27,9 @@ that consent classification to a personalized offer without reviewing it.
 | replace | any-marquee | /example/smart-tools | /example-shared/fragments/smart-tools/phone-hero |
 
 There is deliberately no desktop or `all` column: nonmatching users keep the
-original page. `phone` is viewport-based; see `personalization-tags.md` for the
-exact threshold. Confirm `any-marquee` uniquely selects the intended plain-HTML
+original page. `phone` requires mobile-device detection **and** a screen width
+or height below 550; narrowing a desktop browser viewport alone is not enough.
+See `personalization-tags.md`. Confirm `any-marquee` uniquely selects the intended plain-HTML
 block. Attach the resolvable manifest path in page `personalization` metadata.
 
 **Verify:** use `?mep`, confirm phone qualification after reload, and enable

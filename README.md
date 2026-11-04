@@ -75,7 +75,7 @@ The skill keeps its surface area out of `SKILL.md` and routes to focused files:
 | File | Covers |
 |------|--------|
 | `concepts.md` | MEP concepts in depth (native personalization vs Target-dependent, login/entitlement granularity, scheduled promos) |
-| `manifest-schema.md` | Exact sheet/column schema, accepted values, and JSON shape |
+| `manifest-schema.md` | Exact sheet/column schema, page-scoped placeholder copy, accepted values, and JSON shape |
 | `actions.md` | Every action (`replace`, `remove`, `insertBefore/After`, `updateAttribute`, …) incl. legacy-name mapping |
 | `selectors.md` | Selector rules against **plain** HTML, the "goldilocks" method, `:has()`, `in-block:`, first-match vs `#_all` |
 | `personalization-tags.md` | Tags, operators, and page filters — device/`PHONE_SIZE`, geo/`countryIP`, login, params; tag/segment intake |
@@ -187,6 +187,32 @@ Or open `skills/milo-mep/scripts/lint.html` in a browser and paste the JSON.
 - **Changelog** — notable changes are in
   [`skills/milo-mep/CHANGELOG.md`](skills/milo-mep/CHANGELOG.md).
 
+### Incorporating community knowledge
+
+Treat community answers as leads, not runtime authority. Search a bounded
+sample, filter the exact requested channel, deduplicate by thread permalink,
+and distinguish original messages from generated summaries. Semantic search
+is not a channel export: record message-count/completeness gaps and do not
+claim pre-rollout coverage without a verified rollout date.
+
+With Glean, use Slack real-time search scoped to the exact channel, then read
+the original thread text where available. Search snippets and indexed thread
+text can omit replies even when a read succeeds; record that limitation.
+A bot-introduction announcement is an observed milestone, not proof of when a
+particular skill version was connected. Separate human resolutions from bot
+answers and human reposts of skill output to avoid circular evidence.
+
+Keep raw conversations, internal source links, dates, and the evidence/decision
+ledger outside Git in an approved access-controlled location. Read available
+corrections and outcomes; verify any adopted behavior against Milo source.
+Unresolved or summary-only claims remain investigation candidates, not skill
+rules. Historical workarounds can be obsolete even when accurately quoted.
+
+Add only sanitized guidance, synthetic examples, reliably detectable lint
+rules, and source-backed regressions to the repository. Reserve some scenarios
+as evaluation probes instead of adding every answer as a worked example.
+Never commit raw Slack transcripts, real offer data, names, or internal links.
+
 ### Regression and release gates
 
 Requires Node.js 22+ and Python 3.10+; there are no packages to install.
@@ -203,6 +229,12 @@ evaluation-fixture/grader controls, installed version consistency, exact
 archive contents and symlink rejection. Packaging checks run in temporary
 copies, not the working tree. `build-lint-html.mjs --check` detects stale
 generated HTML **without rewriting it**.
+
+Pinned-source tests execute isolated functions from the bundled Milo snapshot
+to check page-filtered placeholders, explicit preview overrides, selector
+attribute parsing, and attribute writes, with
+browser/service dependencies stubbed. They are not end-to-end browser tests
+and do not certify every deployed site's runtime version.
 
 These are deterministic regressions, **not evidence that an agent activated
 or answered correctly**. [`evals/README.md`](evals/README.md) defines a separate

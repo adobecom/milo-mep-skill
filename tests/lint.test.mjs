@@ -68,6 +68,33 @@ test("replacePage sharing a page filter warns", () => {
   assert.ok(has(findings([1, 2].map(() => ({ ...row, action: "replacePage", selector: "" }))), "warn", /only the first applies/));
 });
 
+test("page-specific placeholder after an unscoped fallback is shadowed", () => {
+  const m = manifest();
+  m.placeholders = {
+    columns: ["key", "page filter", "value"],
+    rows: [
+      { key: "copy", value: "" },
+      { key: "copy", "page filter": "/example/tool", value: "Specific copy" },
+    ],
+  };
+  assert.ok(has(lintManifest(m), "warn", /placeholder 'copy' is shadowed by unscoped row 1/));
+  assert.equal(lintManifest(m).find((f) => /shadowed/.test(f.msg)).where, "placeholders row 2");
+});
+
+test("scoped duplicate placeholder keys followed by fallback are valid", () => {
+  const m = manifest();
+  m["helix-placeholders"] = {
+    columns: ["key", "page filter (optional)", "value"],
+    rows: [
+      { key: "copy", "page filter (optional)": "/example/a", value: "A" },
+      { key: "copy", "page filter (optional)": "/example/b", value: "B" },
+      { key: "copy", value: "General" },
+      { key: "other", value: "Unrelated" },
+    ],
+  };
+  assert.deepEqual(lintManifest(m), []);
+});
+
 test("fragment collection strips flags and ignores attribute URLs", () => {
   assert.deepEqual(collectFragments(manifest([
     { ...row, selector: "/fragments/old #_include-fragments", all: "/fragments/new#_dnt" },

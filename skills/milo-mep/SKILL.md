@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.0.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.1.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -52,6 +52,7 @@ Start here to orient, then follow the pointers.
 | **Author / design** a new manifest from a goal | start from `assets/mep-manifest-template.xlsx` (the official base), all of the above **plus** `references/conventions.md` (naming/folders) |
 | **Enable** MEP on a page | `references/enable-and-qa.md` |
 | **QA / troubleshoot** (why isn't it applying?) | `references/enable-and-qa.md` |
+| Copy varies by page URL / many nearly identical fragments | `references/manifest-schema.md` → *Page-scoped placeholder values* |
 | Explain the **MEP button** / `?mep` preview (what it does + how it works) | `references/mep-button.md` |
 | Want a worked, real example | `references/example-manifest.md` |
 | Want compact synthetic patterns | `references/synthetic-examples.md` (native personalization, manifest conflicts, localization failure) |

@@ -123,6 +123,25 @@ class XlsxTests(unittest.TestCase):
             write_manifest(self.output, info={"manifest-conset-type": "personalized offer"})
         self.assertEqual(self.output.read_bytes(), b"existing workbook")
 
+    def test_page_scoped_placeholders_round_trip_and_shared_linter_warning(self):
+        rows = [
+            {"key": "copy", "page filter": "/example/a", "value": "A"},
+            {"key": "copy", "page filter": "/example/b", "value": "B"},
+            {"key": "copy", "page filter": "", "value": "General"},
+        ]
+        for scoped_first in (True, False):
+            ordered = rows if scoped_first else [rows[-1], *rows[:-1]]
+            write_manifest(self.output,
+                           experiences={"columns": ["action", "selector", "all"], "rows": [
+                               {"action": "replace", "selector": "any-marquee", "all": "{{copy}}"},
+                           ]},
+                           placeholders={"columns": ["key", "page filter", "value"], "rows": ordered})
+            self.assertEqual(read_manifest(self.output)["helix-placeholders"]["rows"], ordered)
+            result = subprocess.run([sys.executable, str(SCRIPTS / "lint_manifest.py"), str(self.output)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual("is shadowed by unscoped row 1" in result.stdout, not scoped_first)
+
 
 if __name__ == "__main__":
     unittest.main()

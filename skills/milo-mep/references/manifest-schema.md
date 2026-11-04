@@ -95,12 +95,43 @@ the matching value.
 | `key` | yes | The placeholder name used as `{{key}}`. |
 | `value` | yes (default column) | Default replacement text. A column named `other` is also recognized as a fallback. |
 | *(additional columns)* | no | Locale-/experience-specific overrides. Column headers may be experience names (matching `experiences` headers), geo folder codes (`fr`, `de`), page locale (`en-CA`, `fr-CA`), page language (`en`, `fr`), page country (`US`, `CA`), or `countryip(<code>)`. |
+| `page filter` or `page filter (optional)` | no | Restricts a placeholder row to a page pathname, using the same `matchGlob` syntax as experience page filters. Blank matches every page using the manifest. |
 
 - Nested placeholders are supported.
 - Manifest-specific placeholders override global placeholders **only** for users
   who qualify for the manifest's experiences.
 - Analytics resolution priority for a placeholder column: `en-us` > `us` > `en`
   > `key`.
+
+### Page-scoped placeholder values
+
+**One shared fragment can have different copy on different pages.** Add a
+`page filter` column to `helix-placeholders`, repeat the placeholder key with
+page-specific values, and place a blank-filter fallback **last**:
+
+| key | page filter | value |
+|---|---|---|
+| hero-copy | /example/tool-a | Copy for tool A |
+| hero-copy | /example/tool-b | Copy for tool B |
+| hero-copy | | General tool copy |
+
+Use `{{hero-copy}}` in the shared content. An exact filter matches that path
+(and its `.html` form); use `**/example/tool-a` only if all locale prefixes
+should share the same copy. No new fragment or experience column is needed
+for each page. The manifest must still be loaded and a non-default experience
+selected; a `default` experience does not apply its placeholder overrides.
+
+`parsePlaceholders` keeps the **first matching row per key**. A nonmatching
+row does not consume the key, but a matching blank value does: it does not
+fall through to a later row. Put scoped rows before unscoped fallbacks.
+The value column is also chosen in **sheet column order**: the first header
+matching the selected experience, locale/country, `value`, or `other` is used.
+The same column is read for all matching rows; blank cells do not trigger a
+per-cell fallback to a later value column.
+
+Older advice that placeholders cannot vary by page URL predates this behavior.
+Confirm the deployed Milo version if a site does not support these columns.
+Source: `parsePlaceholders` and `matchGlob` in `assets/source/personalization.js`.
 
 ## Published JSON shape
 

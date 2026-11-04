@@ -194,6 +194,14 @@ the symptom.
 
 Work down this list:
 
+**Before diagnosing a production targeting leak:** compare a clean URL with
+the reported preview URL. A carried `mep=<manifest>--<experience>` parameter
+can explicitly attach/force that manifest on a different page; hiding the
+button does not clear it. See `mep-button.md` → *A manifest appears on the wrong
+page after previewing*. For repeated copy that varies by pathname, use the
+page-scoped placeholder rows in `manifest-schema.md` rather than duplicating
+fragments or inventing page-specific audience columns.
+
 1. **Not enabled** — is the manifest listed in `personalization` metadata (and
    `target on` if it uses `target-` columns)? If the values *are* in the page
    source but the MEP pill still says off, check the **block name**: whole-page

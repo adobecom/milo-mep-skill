@@ -112,6 +112,34 @@ The reverse direction is `parseMepParam()` in `personalization.js`: it splits
 `config.mep.variantOverride`, which `getPersonalizationVariant` honors before any
 audience matching — that's how a forced experience wins.
 
+### A manifest appears on the wrong page after previewing
+
+**Check the URL before changing production targeting.** A nonempty
+`mep=<path>--<variant>` parameter can load a manifest even when the page's
+normal metadata/promo sources do not attach it. If that parameter is carried
+to another page or locale, it can preview the same manifest there. The
+manifest's row page/country filters still apply.
+
+Compare these URLs, preserving unrelated query parameters as needed:
+
+```text
+/de/example/tool?mep=%2Fexample%2Ftool.json--all
+/de/example/tool?mep
+/de/example/tool
+```
+
+The first loads/forces the preview manifest. Bare `?mep` shows the panel
+without forcing a manifest list; the clean URL tests normal delivery.
+`mepButton=off` only hides the UI: it does **not** clear forced experiences.
+Remove the nonempty `mep` value and reload before deciding the page has a
+production geo/audience leak. If it persists on the clean URL, inspect the
+normal metadata, promo/Target sources, filters, and qualification.
+
+**Verify:** compare the selected experiences and source on the forced and
+clean URLs, then use bare `?mep` plus Highlight Changes for normal-delivery QA.
+Source: `combineMepSources`, `parseMepParam`, and
+`getPersonalizationVariant` in `assets/source/personalization.js`.
+
 ## How "Highlight Changes" works
 
 MEP tags every element it changes as it applies commands. `addIds` (in

@@ -1,6 +1,7 @@
 import copy
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -14,9 +15,10 @@ from evaluate import grade, load_cases
 class EvalTests(unittest.TestCase):
     def setUp(self):
         self.cases = load_cases()
+        version = re.search(r'^  version: "([^"]+)"$', (ROOT / "skills/milo-mep/SKILL.md").read_text(), re.M).group(1)
         self.capture = {
             "run": {"model": "grader-unit-test-not-a-model-run", "host": "unit-test",
-                    "skill_version": "1.1.0",
+                    "skill_version": version,
                     "reviewer": "test fixture", "date": "2026-11-03"},
             "responses": [
                 {"id": c["id"], "activated": c["activate"], "answer": c["reference_answer"],

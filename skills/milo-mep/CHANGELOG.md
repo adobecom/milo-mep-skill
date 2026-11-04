@@ -5,6 +5,23 @@ runtime.)
 
 ## 2026-11-03
 
+**Skill release 1.1.1 — source-verified troubleshooting**
+- Documented page-filtered placeholder rows, first-matching-key semantics,
+  column-order value selection, and default-experience behavior. Older advice
+  that page-specific placeholder copy is unavailable is not current.
+- Added a warning when an unscoped placeholder row shadows later rows for the
+  same key, without flagging valid scoped duplicates and last fallbacks.
+- Added forced-preview carry-over diagnosis: a nonempty `mep` parameter can
+  attach a manifest on another page; hiding the panel does not clear it.
+- Added pinned-source behavioral regressions and three synthetic agent eval
+  cases, including a held-out nested-fragment lifecycle transfer probe.
+- Used original community Q&A retrieved through Glean to verify the pilot
+  findings; documented existing M@S Studio href updates and whole-value class
+  updates, with two more synthetic evals and pinned-source attribute regressions.
+  Raw conversations and internal provenance are not distributed with the skill.
+- Corrected the synthetic phone example: qualification requires mobile-device
+  detection plus the screen-size condition, not just a narrow desktop viewport.
+
 **Skill release 1.1.0 — reliability and distribution**
 - Added an installed release identifier in `SKILL.md`, separate from the Milo
   runtime source pin. Preserved the installed concise activation description,
