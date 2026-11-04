@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.1"
+  version: "1.1.2"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.1.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.2.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -81,6 +81,10 @@ URL — the `.aem.page` preview URL requires auth).
   save a draft does not permit previewing or publishing it.
 - Report access/authentication/write failures plainly. Never report a live edit
   or publication as successful without a confirming tool result.
+- When a request is outside this skill's scope, do not turn a speculative
+  diagnosis into a shared-content operation. In particular, stale delivery
+  alone is not a reason to republish; publication-state checks are read-only,
+  while republishing is a separate, explicitly authorized remediation.
 
 **Reading/writing manifest `.xlsx` files:** use the bundled
 `scripts/mep_xlsx.py` (openpyxl vendored in `scripts/vendor/`, no install
@@ -140,6 +144,8 @@ difference between MEP-native personalization (no Target needed: device, OS,
 browser, locale, login, params, geo) and Target-dependent features (A/B tests,
 AAM/Target segments). Note the performance tradeoff: `target on` blocks page
 build; MEP alone is cheap.
+If a new native experience needs no Target, say **no Target change is needed**;
+do not recommend disabling existing Target metadata that other features use.
 
 ### 2. Interpret a manifest
 Given an xlsx or json, produce a reading that **leads with business framing and
@@ -180,6 +186,10 @@ linter (`node scripts/lint.mjs <json|URL>` or `scripts/lint.html`; xlsx via
 the answer in the **troubleshooting answer format**
 (Verdict → fix-as-code → brief Why → ranked "other things to check" → Verify)
 and the causes menu — both in `references/enable-and-qa.md`.
+Always finish actionable authoring/troubleshooting answers with one observable
+check: the expected content, attribute, or selected experience on the relevant
+page. `?mep` + Highlight Changes alone is not the expected result. Confirm
+element selectors are unique in authored HTML before recommending a broad edit.
 
 ## Ground rules that prevent most mistakes
 

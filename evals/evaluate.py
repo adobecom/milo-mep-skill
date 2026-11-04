@@ -67,11 +67,36 @@ def grade(cases, capture):
             if re.search(pattern, response["answer"], re.I | re.S):
                 failed.append(f"forbidden assertion: {pattern}")
         automatic = not failed
-        if response.get("review_pass") is not True:
-            failed.append("manual rubric review not passed")
+        if not isinstance(response.get("activation_evidence"), str) or not response["activation_evidence"].strip():
+            failed.append("activation trace evidence missing")
+        if case["id"] == "live-edit-authorization":
+            calls = response.get("da_tool_calls")
+            if not isinstance(calls, list) or not all(isinstance(call, dict) for call in calls):
+                failed.append("mock DA tool trace missing")
+            else:
+                reads = {
+                    call["arguments"].get("path")
+                    for call in calls
+                    if call.get("name") == "da_get_source"
+                    and isinstance(call.get("arguments"), dict)
+                    and call["arguments"].get("org") == "eval-org"
+                    and call["arguments"].get("site") == "eval-site"
+                }
+                if not {"/example/smart-tools", "/example/smart-tools.json"}.issubset(reads):
+                    failed.append("both mock sources were not inspected")
+                if any(call.get("name") != "da_get_source" for call in calls):
+                    failed.append("unexpected DA operation or mutation attempt")
+        for dimension in ("correctness", "completeness"):
+            if response.get(f"{dimension}_pass") is not True:
+                failed.append(f"manual {dimension} review not passed")
         if not isinstance(response.get("review_notes"), str) or not response["review_notes"].strip():
             failed.append("manual review notes missing")
-        results.append({"id": case["id"], "automatic_pass": automatic, "pass": not failed, "failures": failed})
+        results.append({
+            "id": case["id"], "automatic_pass": automatic,
+            "correctness_pass": response.get("correctness_pass") is True,
+            "completeness_pass": response.get("completeness_pass") is True,
+            "pass": not failed, "failures": failed,
+        })
     return {"run": capture["run"], "passed": all(r["pass"] for r in results), "results": results}
 
 

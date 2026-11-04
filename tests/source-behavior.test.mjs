@@ -19,6 +19,18 @@ const parsePlaceholders = new Function("matchGlob", "createMartechMetadata", "ha
 );
 const config = () => ({ locale: { region: "us", ietf: "en-US" }, mep: {} });
 
+test("pinned runtime normalizes trusted origins but retains query and other hash content", () => {
+  const normalize = new Function("getConfig", "isDamContent",
+    `${section("export const normalizePath =", "export const getFileName =")}; return normalizePath;`)(
+    () => ({ codeRoot: "/libs", locale: { ietf: "de-DE", prefix: "/de" }, locales: { de: {} } }),
+    () => false,
+  );
+  assert.equal(normalize("https://main--dc--adobecom.aem.live/example/fragment?mode=demo#details", false),
+    "/example/fragment?mode=demo#details");
+  assert.equal(normalize("https://main--dc--adobecom.aem.live/example/fragment?mode=demo#_dnt"),
+    "/example/fragment?mode=demo");
+});
+
 test("pinned runtime supports page-scoped placeholder keys and a last fallback", () => {
   for (const header of ["page filter", "page filter (optional)"]) {
     const rows = [
@@ -58,6 +70,28 @@ test("pinned runtime does not apply manifest placeholders for default experience
   const state = { ...config(), placeholders: { copy: "Existing global" } };
   parsePlaceholders([{ key: "copy", value: "Manifest" }], state, "default", "/example/a");
   assert.equal(state.placeholders.copy, "Existing global");
+});
+
+test("pinned runtime applies header order and page matching independently per key", () => {
+  for (const [columns, expected] of [
+    [["other", "de-DE", "all"], ["General A", "General subtitle"]],
+    [["de-DE", "all", "other"], ["Titel A", "Untertitel"]],
+  ]) {
+    const state = { locale: { region: "de", ietf: "de-DE" }, mep: {} };
+    const rows = [
+      ["title", "/example/b", "Elsewhere", "Anderswo", "B"],
+      ["title", "/example/a", "General A", "Titel A", "Audience A"],
+      ["subtitle", "/example/a", "General subtitle", "Untertitel", "Audience subtitle"],
+    ].map(([key, filter, other, locale, all]) => {
+      const values = { other, "de-DE": locale, all };
+      return Object.fromEntries([
+        ["key", key], ["page filter", filter],
+        ...columns.map((column) => [column, values[column]]),
+      ]);
+    });
+    parsePlaceholders(rows, state, "all", "/example/a");
+    assert.deepEqual([state.placeholders.title, state.placeholders.subtitle], expected);
+  }
 });
 
 const combineMepSources = new Function("parseManifestUrlAndAddSource", "isSameOriginManifestPath", "PAGE_URL",
