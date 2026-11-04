@@ -104,6 +104,13 @@ Append these to a selector (combine as needed; parsed by splitting on `#_`):
   selector you must add `#_include-fragments` (behavior since the Nov 2024
   release). Same for nested cross-fragments (XF) and M@S content — a plain CSS
   selector only searches the base page and never reaches the nested fragment.
+  This flag does not make the selector unique. Before proposing even an
+  example selector, explicitly require a uniqueness check against the authored
+  HTML of the fragment that actually loads, including any replacement.
+  Without `#_all`, a command completes on its first match, which may occur in
+  a different fragment than intended. Narrow the selector rather than adding
+  `#_all` unless the user intends every match. Verify the intended element with
+  Highlight Changes and its final attribute/content.
 - **`#_include-gnav`** — also search inside the global nav (gnav), which MEP
   otherwise doesn't scan.
 - **`#_dnt`** — (on fragments) do-not-translate: skip localized fragment lookup.

@@ -5,6 +5,13 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.8 — explicit selector verification (candidate)**
+- Required uniqueness checks for illustrative and nested-fragment selectors,
+  including first-match completion and observable Highlight Changes QA.
+- Accepted equivalent no-edit, blank-filter-last, and unchanged-token wording
+  in evaluation screens without relaxing manual or DA trace gates.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 **Skill release 1.1.7 — safe authoring alternatives and complete priority (candidate)**
 - Required inspection and preserved audience actions before offering an
   existing-manifest edit; removed the unsafe one-row fallback for unseen files.

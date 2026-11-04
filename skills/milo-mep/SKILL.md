@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.7"
+  version: "1.1.8"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.7.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.8.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -107,6 +107,13 @@ these for every response:
   hunt for it.
 - **Show the fix as code.** Put corrected selectors, rows, values, and URLs in
   code blocks/tables, not buried in a sentence.
+- **Every proposed element selector needs a uniqueness check**, including
+  illustrative selectors and nested-fragment troubleshooting. Say to confirm
+  it matches exactly the intended authored element in the content that
+  actually loads; do not imply an example is already verified. Fragment
+  inclusion flags expand where a command searches, not which match it chooses.
+  Mention first-match completion when multiple fragments may match, and verify
+  the intended element with `?mep` + Highlight Changes and its final attribute.
 - **Short sections with bold labels; one idea per bullet.** Prefer a labeled
   list over a paragraph. Keep sentences short.
 - **Rank by likelihood.** When listing causes or fixes, put the most probable
