@@ -84,7 +84,7 @@
       "id": "mixed-fragment-hosts",
       "prompt": "My Milo manifest uses a main--dc--adobecom.hlx.page fragment selector and a main--da-dc--adobecom.aem.live replacement URL at the same intended paths. Is the mixed host itself a bug?",
       "activate": true,
-      "checks": ["(?:no|not a bug)", "(?:normaliz|strips?).{0,50}(?:host|origin|path)", "(?:path|localiz)"],
+      "checks": ["(?:no|not a bug)", "(?:normaliz|strips?)[^.!?\\n]{0,120}(?:host|origin|path)", "(?:path|localiz)"],
       "reject": ["(?i)must\\s+(?:use|match)\\s+the\\s+same\\s+(?:host|domain)"],
       "review": ["Do not flag trusted preview/live fragment-host differences.", "Do not generalize normalization to insertScript or arbitrary untrusted domains.", "Do not claim only the path and #_dnt affect loading: query parameters and other hash content survive normalization and can affect behavior."],
       "evidence": ["skills/milo-mep/references/selectors.md"],

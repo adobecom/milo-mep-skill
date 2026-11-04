@@ -114,6 +114,21 @@ class EvalTests(unittest.TestCase):
         graded = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
         self.assertFalse(graded["automatic_pass"])
 
+    def test_fragment_normalization_accepts_complete_subject_within_one_sentence(self):
+        response = next(r for r in self.capture["responses"] if r["id"] == "mixed-fragment-hosts")
+        response["answer"] = (
+            "No, those trusted hosts are not a bug. "
+            "Milo normalizes both fragment selectors and replacement URLs to paths on the current page's origin. "
+            "Check the actual paths and localization."
+        )
+        self.assertTrue(grade(self.cases, self.capture)["passed"])
+        response["answer"] += " You must use the same host."
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertFalse(result["automatic_pass"])
+        response["answer"] = "No, localization matters. Normalize unrelated data. Then inspect paths."
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertFalse(result["automatic_pass"])
+
     def test_original_hero_is_equivalent_localization_fallback_wording(self):
         response = next(r for r in self.capture["responses"] if r["id"] == "localized-fragment-missing")
         response["answer"] = (
