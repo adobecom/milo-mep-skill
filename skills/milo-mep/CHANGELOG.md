@@ -5,6 +5,15 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.4 — prediction scope and verification (candidate)**
+- Made stored value, MEP substitution, and unverified final page rendering
+  distinct in the entry point, including when reading runtime source directly.
+- Required page/experience-specific QA for prediction-only answers and each
+  compared column layout, not only authoring/troubleshooting answers.
+- Added the exact phone qualification threshold and OR condition to the entry
+  point, backed by pinned-source boundary regressions.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 **Skill release 1.1.3 — placeholder rendering correction (candidate)**
 - Corrected empty placeholder guidance: the selected value is stored empty,
   but MEP's truthy-only replacement leaves the literal token unchanged.

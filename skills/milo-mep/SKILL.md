@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.3"
+  version: "1.1.4"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.3.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.4.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -53,6 +53,7 @@ Start here to orient, then follow the pointers.
 | **Enable** MEP on a page | `references/enable-and-qa.md` |
 | **QA / troubleshoot** (why isn't it applying?) | `references/enable-and-qa.md` |
 | Copy varies by page URL / many nearly identical fragments | `references/manifest-schema.md` → *Page-scoped placeholder values* |
+| Predict placeholder values, column order, or empty-cell behavior | `references/manifest-schema.md` → *Page-scoped placeholder values*; distinguish stored values from rendering |
 | Explain the **MEP button** / `?mep` preview (what it does + how it works) | `references/mep-button.md` |
 | Want a worked, real example | `references/example-manifest.md` |
 | Want compact synthetic patterns | `references/synthetic-examples.md` (native personalization, manifest conflicts, localization failure) |
@@ -113,7 +114,19 @@ these for every response:
 - **Explain the *why* briefly, once.** Two or three sentences on the mechanism,
   tied to any "works when X, fails when Y" signal. Don't repeat it across
   sections.
-- **End with how to verify** (usually the `?mep` + Highlight Changes step).
+- **End with how to verify**, including prediction/explanation-only answers:
+  name the page, selected experience, and expected text or attribute. A correct
+  output table is not a verification step. When comparing column layouts,
+  verify each layout on the supplied page with the supplied experience selected.
+
+**Placeholder predictions:** distinguish the stored value, MEP substitution,
+and final page rendering. An empty stored string leaves the literal token
+unchanged in MEP's truthy-only `replacePlaceholders`; later page placeholder
+processing is not established by that function. Say "MEP substitution retains
+the token; final rendered text needs pipeline verification", not unconditionally
+"the page displays the token". Read the schema reference even when inspecting
+the runtime directly. End with a concrete QA step for the requested page and
+experience, stating which predicted values to check.
 
 Task-specific shapes: interpret → `references/interpret-output-format.md`;
 troubleshoot → the answer format in `references/enable-and-qa.md`.
@@ -209,6 +222,10 @@ the specified page with the intended experience selected.
 - **MEP targets the first match by default**; add `#_all` to hit every match.
 - **Experience-column order is priority**; a user gets the first column they
   match. Put the most specific/important experiences leftmost.
+- **Phone qualification is not viewport width alone**: mobile-device detection
+  **and** (`window.screen.width < 550` **or** `window.screen.height < 550`),
+  evaluated at page load. When explaining phone qualification, include the
+  threshold and OR condition; reload after changing device emulation.
 - **Localization is automatic**: manifests are *not* localized. A GEO page
   reuses the US manifest and Milo looks for a same-named local fragment; if
   none exists, the default (unpersonalized) content shows. Use `#_dnt` or

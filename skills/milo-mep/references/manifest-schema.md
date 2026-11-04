@@ -143,12 +143,19 @@ is empty, not `General`. That is not a guarantee of empty rendered text:
 MEP's `replacePlaceholders` substitutes only truthy values, so it leaves
 `{{hero-copy}}` unchanged for an empty stored value. This is the inspected
 MEP replacement path, not a claim about every later page placeholder pipeline.
+In an answer, label these as **stored value**, **MEP substitution**, and
+**final page rendering**; the last requires checking the deployed pipeline.
 Do not use a blank placeholder as a reliable way to remove copy; supply the
 intended value or propose an appropriate content/removal action.
 Row matching is independently **per key**, not one winning row for the sheet.
 Verify both page-specific paths and a third fallback path with the intended
 non-default experience; check the rendered `{{hero-copy}}` text, not just
 whether the manifest appears in the panel.
+For a prediction-only question, still finish with this QA step: on the
+question's page, select its intended experience and check each predicted key
+for each column layout. If a value is empty, compare MEP substitution with the
+final decorated page rather than promising that either blank copy or a literal
+token must be the final result.
 
 Older advice that placeholders cannot vary by page URL predates this behavior.
 Confirm the deployed Milo version if a site does not support these columns.

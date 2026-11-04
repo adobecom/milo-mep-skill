@@ -18,6 +18,22 @@ const parsePlaceholders = new Function("matchGlob", "createMartechMetadata", "ha
   matchGlob, () => {}, () => false,
 );
 const config = () => ({ locale: { region: "us", ietf: "en-US" }, mep: {} });
+
+test("pinned phone targeting requires mobile detection and either screen dimension below 550", () => {
+  const loadTags = new Function("window", "navigator",
+    `${section("const getUA =", "const PERSONALIZATION_KEYS =")}; return PERSONALIZATION_TAGS;`);
+  for (const [userAgent, width, height, expected] of [
+    ["iPhone", 549, 900, true],
+    ["iPhone", 900, 549, true],
+    ["iPhone", 550, 550, false],
+    ["iPhone", 900, 900, false],
+    ["Desktop", 400, 400, false],
+  ]) {
+    const tags = loadTags({ screen: { width, height } }, { userAgent, maxTouchPoints: 0 });
+    assert.equal(tags.phone(), expected, `${userAgent} ${width}x${height}`);
+  }
+});
+
 const replacePlaceholders = new Function(
   `${section("export function replacePlaceholders(", "const getUpdatedHref =")}; return replacePlaceholders;`,
 )();
