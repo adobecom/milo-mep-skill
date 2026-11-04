@@ -122,6 +122,17 @@ a PZN manifest unless an analyst asks**; it's an analytics-only field.
   `removeContent`→`remove`, `insertContentBefore`→`insertbefore`,
   `appendToSection`→`append`, etc.
 
+### Attribute update contract
+
+`modifyNonFragmentSelector()` removes the final selector token and treats it
+as the attribute name for `updateAttribute`. Write `... href` or `... class`,
+not `... [href]` or `... [class]`. CSS attribute matching earlier in the
+selector remains valid. `COMMANDS.updateattribute` calls
+`el.setAttribute(attribute, value)`; it replaces the complete class value,
+not a class-list merge. An external MAS Studio href is retained as a URL;
+rendering is a separate decoration step (`utils.js` auto-block routing and
+`merch.js` inline field handling), not guaranteed by the attribute write.
+
 ## Selectors — exact behavior
 
 - **Fragment selector** (starts with `/` or `http`): matched against `<a>` hrefs;
@@ -221,6 +232,21 @@ Beyond `manifest-type` / `manifest-execution-order` / `manifest-override-name`:
   preview/publish hosts). Rejected fragment loads are logged, not silently
   dropped.
 - `href` values of `javascript:`/`data:` are rejected in `updateAttribute`.
+
+## Placeholder row and value selection
+
+`parsePlaceholders` supports `page filter` / `page filter (optional)` on the
+placeholder sheet. It applies `matchGlob` to the current pathname, then keeps
+the **first matching row for each exact key**. An earlier unscoped row shadows
+all later rows for that key, including page-specific rows; a matched empty
+value does not fall through. Nonmatching rows do not consume the key.
+
+Value selection uses the **first eligible header in sheet column order**,
+not the order of the `valueNames` lookup list and not a per-cell fallback.
+Experience/locale/country, `value`, and `other` headers can qualify. Put
+specific value columns before generic columns if they should win. A selected
+`default` experience skips manifest placeholder overrides entirely.
+See `manifest-schema.md` → *Page-scoped placeholder values* for authoring.
 
 ## Page-filter glob (`matchGlob`)
 

@@ -6,12 +6,18 @@
 // regexes/backslashes are never mangled.
 //
 //   node scripts/build-lint-html.mjs   # re-run after editing lint-core.mjs or lint-ui.js
+//   node scripts/build-lint-html.mjs --check   # fail without writing if stale
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const args = process.argv.slice(2);
+if (args.length > 1 || (args.length === 1 && args[0] !== "--check")) {
+  console.error("Usage: node build-lint-html.mjs [--check]");
+  process.exit(2);
+}
 const core = readFileSync(join(here, "lint-core.mjs"), "utf8").replace(/^export\s+/gm, "");
 const ui = readFileSync(join(here, "lint-ui.js"), "utf8");
 
@@ -69,5 +75,14 @@ ${ui}
 </html>
 `;
 
-writeFileSync(join(here, "lint.html"), html);
-console.log("Wrote scripts/lint.html (self-contained, " + html.length + " bytes)");
+const output = join(here, "lint.html");
+if (args.includes("--check")) {
+  if (readFileSync(output, "utf8") !== html) {
+    console.error("scripts/lint.html is stale; run node skills/milo-mep/scripts/build-lint-html.mjs");
+    process.exit(1);
+  }
+  console.log("scripts/lint.html is up to date");
+} else {
+  writeFileSync(output, html);
+  console.log("Wrote scripts/lint.html (self-contained, " + html.length + " bytes)");
+}

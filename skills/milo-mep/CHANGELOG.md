@@ -5,6 +5,42 @@ runtime.)
 
 ## 2026-11-03
 
+**Skill release 1.1.1 — source-verified troubleshooting**
+- Documented page-filtered placeholder rows, first-matching-key semantics,
+  column-order value selection, and default-experience behavior. Older advice
+  that page-specific placeholder copy is unavailable is not current.
+- Added a warning when an unscoped placeholder row shadows later rows for the
+  same key, without flagging valid scoped duplicates and last fallbacks.
+- Added forced-preview carry-over diagnosis: a nonempty `mep` parameter can
+  attach a manifest on another page; hiding the panel does not clear it.
+- Added pinned-source behavioral regressions and three synthetic agent eval
+  cases, including a held-out nested-fragment lifecycle transfer probe.
+- Used original community Q&A retrieved through Glean to verify the pilot
+  findings; documented existing M@S Studio href updates and whole-value class
+  updates, with two more synthetic evals and pinned-source attribute regressions.
+  Raw conversations and internal provenance are not distributed with the skill.
+- Corrected the synthetic phone example: qualification requires mobile-device
+  detection plus the screen-size condition, not just a narrow desktop viewport.
+
+**Skill release 1.1.0 — reliability and distribution**
+- Added an installed release identifier in `SKILL.md`, separate from the Milo
+  runtime source pin. Preserved the installed concise activation description,
+  keeping it within the Agent Skills description length limit.
+- Added offline linter/CLI, XLSX round-trip, template-preservation, archive,
+  release-identity, and generated-browser freshness regressions with a shared
+  local/CI release gate.
+- Added 14 behavioral evaluation cases with blind prompt export, captured-run
+  grading, negative controls, evidence, and mandatory manual rubric review.
+  Grader fixture tests are explicitly not live model evaluation results.
+- Made shared-content inspection read-only by default; require explicit
+  authorization for writes and separate preview/publish/move/delete operations,
+  with destination freshness checks and confirmation of tool success.
+- Added compact synthetic native-personalization, Target/Promo priority, and
+  missing-localized-fragment examples.
+- Fixed XLSX authoring silently omitting consent/country keys absent from the
+  official template: supported missing info keys are appended without
+  rebuilding the workbook; unknown keys now fail explicitly.
+
 **MEP vs Target priority**
 - Added an explicit cross-source answer: Execution Order first, then Type
   (`Personalization` before `Promo` when execution order ties), with examples

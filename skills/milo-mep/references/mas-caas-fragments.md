@@ -46,6 +46,31 @@ A merch card is a `<merch-card>` web component containing
 
 ## The M@S override path (`in-block:` + a mas.adobe.com fragment)
 
+### Changing an existing Studio link without a DA wrapper
+
+If the page already authors a MAS Studio anchor, change that anchor's `href`
+before decoration rather than replacing its visible text:
+
+| action | selector | experience-cell value |
+|---|---|---|
+| `updateAttribute` | `a[href*="mas.adobe.com/studio.html"][href*="query=11111111-1111-4111-8111-111111111111"] href` | the complete replacement Studio URL |
+
+Use a unique identifier from the **actual plain HTML**, preserve any required
+Studio parameters, and put the full replacement URL in the intended
+experience column. For a nested fragment, append `#_include-fragments` after
+`href`; use `#_all` only for intentional multiple matches. Do not select a
+hydrated `<merch-card>` if the authored element is an anchor.
+
+This is an **existing-link update**, not a generic promise that `insertAfter`
+with a Studio URL creates a new card. Milo's `utils.js` auto-block routing
+recognizes Studio links; URLs containing `field=` route through the lightweight
+merch/field path, not necessarily a whole merch card. Verify both the updated
+href and the rendered result with M@S highlight. If no suitable anchor exists,
+use an authored fragment containing the desired content, or a supported
+block-specific override after checking that block's contract.
+
+### Block-specific fragment overrides
+
 The source has a dedicated mechanism for overriding a M@S card by fragment id
 (`registerInBlockActions`): use an **`in-block:<block>`** selector whose value is
 a `https://mas.adobe.com/…#…fragment=<guid>…` URL. MEP extracts the fragment id,
