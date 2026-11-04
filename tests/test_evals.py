@@ -88,6 +88,18 @@ class EvalTests(unittest.TestCase):
                 result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == case_id)
                 self.assertTrue(result["automatic_pass"], result["failures"])
 
+    def test_retains_token_is_accepted_without_waiving_manual_reviews(self):
+        response = next(r for r in self.capture["responses"] if r["id"] == "placeholder-column-order")
+        response["answer"] = (
+            "| A | General |\n| B | Phone copy |\n"
+            '| C: key,phone,value, phone empty | "" | Retains {{hero-copy}} |\n'
+            "Sheet column order wins, not valueNames order."
+        )
+        response["completeness_pass"] = False
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertTrue(result["automatic_pass"], result["failures"])
+        self.assertFalse(result["pass"])
+
     def test_table_predictions_still_reject_wrong_outputs_and_missing_literal(self):
         answer = ("| A | value | General |\n| B | phone | Phone copy |\n"
                   "| C | phone | empty stored value |\n"
