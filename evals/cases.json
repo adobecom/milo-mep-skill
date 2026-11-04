@@ -54,7 +54,7 @@
       "id": "localized-fragment-missing",
       "prompt": "A Milo hero swap works on /example/smart-tools but not /de/example/smart-tools. Both qualify, load the same manifest, and match **/example/smart-tools. The US replacement exists but its /de counterpart is 404. What is the fix?",
       "activate": true,
-      "checks": ["localiz", "(?:default|original).{0,30}(?:page|content)", "#_dnt", "(?:create|supply|add).{0,60}(?:German|localized|/de)"],
+      "checks": ["localiz", "(?:default|original).{0,30}(?:page|content|hero)", "#_dnt", "(?:create|supply|add).{0,60}(?:German|localized|/de)"],
       "reject": ["(?i)automatically\\s+falls?\\s+back\\s+to\\s+(?:the\\s+)?US\\s+(?:replacement|fragment)"],
       "review": ["Correctness: missing local fragment leaves default page content, not the US replacement.", "Correctness: put #_dnt on the replacement fragment URL in the experience cell, not the selector identifying original content; use it only for intentionally unlocalized content.", "Completeness: propose supplying the localized fragment without assuming authorization to publish; verify localized replacement content on the German page. Do not create a localized manifest."],
       "evidence": ["skills/milo-mep/references/synthetic-examples.md", "skills/milo-mep/references/selectors.md"],

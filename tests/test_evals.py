@@ -114,6 +114,17 @@ class EvalTests(unittest.TestCase):
         graded = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
         self.assertFalse(graded["automatic_pass"])
 
+    def test_original_hero_is_equivalent_localization_fallback_wording(self):
+        response = next(r for r in self.capture["responses"] if r["id"] == "localized-fragment-missing")
+        response["answer"] = (
+            "A 404 leaves the original, unpersonalized hero; it does not fall back to the US replacement. "
+            "Create a localized German fragment or use #_dnt for intentionally unlocalized content."
+        )
+        self.assertTrue(grade(self.cases, self.capture)["passed"])
+        response["answer"] += " Milo automatically falls back to the US replacement."
+        result = next(r for r in grade(self.cases, self.capture)["results"] if r["id"] == response["id"])
+        self.assertFalse(result["automatic_pass"])
+
     def test_existing_audience_actions_must_not_be_blanked(self):
         response = next(r for r in self.capture["responses"] if r["id"] == "implicit-firefox-hide")
         original = response["answer"]
