@@ -34,6 +34,9 @@ runtime.)
   inclusive and that a blank `start`/`end` is open-ended rather than disabled,
   with a pinned-source test. Corrected the `country-not-list` reference answer:
   `?akamaiLocale` outranks the country cookie.
+- From the first full runs: the promo checklist item states that a blank
+  schedule bound is open-ended (not disabled), and authoring guidance fills
+  the row's page filter when the goal names a page.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
 ## 2026-11-05

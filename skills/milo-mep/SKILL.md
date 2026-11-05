@@ -159,7 +159,9 @@ these for every response:
   and one that should not: the intended pages plus an unrelated page; a time
   inside the window plus one just outside it. Outside its schedule (or
   `locales`), a promo manifest loads as Default unless its experience is
-  forced with `?mep`, so check bounds unforced.
+  forced with `?mep`, so check bounds unforced. Bounds are inclusive; a blank
+  schedule `start` or `end` leaves that side open-ended rather than disabling
+  the promo (see `references/source-notes.md` → *Promos*).
 - **Native audiences.** When a new experience needs no Target, say **no Target
   change is needed**; do not recommend disabling existing Target metadata that
   other features use.
@@ -230,7 +232,9 @@ Turn a goal ("A/B test the hero CTA for logged-in users on the US Photoshop
 page") into concrete rows: set the manifest type, name the file per
 `references/conventions.md`, pick the right selector (prefer simplified,
 "goldilocks" specificity), the right action, and the right experience-column
-header(s) (rename/add columns beyond the default `all`). Also show it as a table
+header(s) (rename/add columns beyond the default `all`). When the goal names a
+page, fill the row's `page filter (optional)` with that path (a blank filter
+applies on every page that loads the manifest). Also show it as a table
 the user can paste into Excel, and state the filename and folder it lives in.
 
 When the page already has personalization, follow *Answer checklist → Adding
