@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.8"
+  version: "1.1.9"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.8.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.9.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -106,14 +106,9 @@ these for every response:
   the fix, or the bottom line — before any explanation. Never make the reader
   hunt for it.
 - **Show the fix as code.** Put corrected selectors, rows, values, and URLs in
-  code blocks/tables, not buried in a sentence.
-- **Every proposed element selector needs a uniqueness check**, including
-  illustrative selectors and nested-fragment troubleshooting. Say to confirm
-  it matches exactly the intended authored element in the content that
-  actually loads; do not imply an example is already verified. Fragment
-  inclusion flags expand where a command searches, not which match it chooses.
-  Mention first-match completion when multiple fragments may match, and verify
-  the intended element with `?mep` + Highlight Changes and its final attribute.
+  code blocks/tables, not buried in a sentence. When real content is
+  unavailable, use concrete synthetic paths/selectors labeled as examples;
+  never leave the whole fix as `<selector>` / `<fragment URL>`.
 - **Short sections with bold labels; one idea per bullet.** Prefer a labeled
   list over a paragraph. Keep sentences short.
 - **Rank by likelihood.** When listing causes or fixes, put the most probable
@@ -121,25 +116,45 @@ these for every response:
 - **Explain the *why* briefly, once.** Two or three sentences on the mechanism,
   tied to any "works when X, fails when Y" signal. Don't repeat it across
   sections.
-- **End with how to verify**, including prediction/explanation-only answers:
-  name the page, selected experience, and expected text or attribute. A correct
-  output table is not a verification step. When comparing column layouts,
-  verify each layout on the supplied page with the supplied experience selected.
-- **For an additive change, verify preservation too.** If proposing a separate
-  manifest alongside existing ones, explicitly tell the author to check
-  overlapping selectors/actions and row filters, with execution/type ordering
-  in mind. Then verify both the new result and unchanged unrelated existing
-  personalization for the affected audience. A separate manifest avoids
-  experience-column inheritance problems; it does not prove conflict freedom.
+- **End with an observable verification step**, including for
+  prediction/explanation-only answers: name the page, the selected experience,
+  and the expected text, attribute, or selected experience. `?mep` + Highlight
+  Changes is the method, not the expected result, and a correct output table is
+  not a verification step. When comparing layouts, verify each one on the
+  supplied page with the supplied experience selected.
 
-**Placeholder predictions:** distinguish the stored value, MEP substitution,
-and final page rendering. An empty stored string leaves the literal token
-unchanged in MEP's truthy-only `replacePlaceholders`; later page placeholder
-processing is not established by that function. Say "MEP substitution retains
-the token; final rendered text needs pipeline verification", not unconditionally
-"the page displays the token". Read the schema reference even when inspecting
-the runtime directly. End with a concrete QA step for the requested page and
-experience, stating which predicted values to check.
+### Answer checklist (apply whichever items fit)
+
+- **Proposed selectors.** For every proposed element selector, including
+  illustrative ones and nested-fragment fixes: state that it matches
+  authored/plain HTML (even when the user supplied it), and tell the author to
+  confirm it matches exactly the one intended element in the content that
+  actually loads, including any replacement fragment. Do not imply an example
+  is already verified. Without `#_all`, a command completes on its first match;
+  `#_include-fragments` widens where it searches, not which match it picks, so
+  mention first-match completion when several fragments may match. Verify the
+  intended element with Highlight Changes and its final attribute/content.
+- **Adding to existing personalization.** Never offer "if a manifest already
+  exists, just add this row to it" for a manifest you have not inspected.
+  Either inspect its experience columns and applicable rows and show how the
+  new audience keeps its existing actions and qualifies in column order, or
+  propose a separate, uniquely named audience-only manifest (confirm the path
+  is unused) and **append** its path to the existing `personalization`
+  metadata. In both cases, tell the author to check other loaded manifests for
+  overlapping selectors/actions and page/country filters, with execution/type
+  ordering in mind, then verify both the new result and that unrelated
+  existing personalization still applies for the affected audience. A separate
+  manifest avoids column-inheritance problems; it does not prove there are no
+  conflicts.
+- **Placeholder predictions.** Read `references/manifest-schema.md` even when
+  inspecting the runtime directly. Label the **stored value**, **MEP
+  substitution**, and **final page rendering** separately. An empty stored
+  string leaves the literal token unchanged in MEP's truthy-only
+  `replacePlaceholders`; later page placeholder processing is not established
+  by that function. Say "MEP substitution retains the token; final rendered
+  text needs pipeline verification", not unconditionally "the page displays the
+  token". In the verification step, list which predicted values to check on the
+  requested page with the intended experience selected.
 
 Task-specific shapes: interpret → `references/interpret-output-format.md`;
 troubleshoot → the answer format in `references/enable-and-qa.md`.
@@ -207,14 +222,8 @@ page") into concrete rows: set the manifest type, name the file per
 header(s) (rename/add columns beyond the default `all`). Also show it as a table
 the user can paste into Excel, and state the filename and folder it lives in.
 
-**Existing-manifest safety:** do not offer "if a manifest already exists, just
-add this row to it" as an alternative to an isolated manifest. Before advising
-an existing-manifest edit, inspect its experience columns and applicable rows,
-then show how the new audience retains its existing actions and qualifies in
-column order. If that content is unavailable, propose a separate, uniquely
-named manifest (confirm its path is unused), append rather than replace
-metadata entries, and include the conflict/preservation QA above. Existing
-manifests are not interchangeable with a new one-row workbook.
+When the page already has personalization, follow *Answer checklist → Adding
+to existing personalization*.
 
 ### 4. QA / troubleshoot
 Build `?mep` preview URLs, reason about why an experience isn't applying
@@ -224,16 +233,8 @@ linter (`node scripts/lint.mjs <json|URL>` or `scripts/lint.html`; xlsx via
 `python scripts/lint_manifest.py <file>` — see `references/linting.md`). Present
 the answer in the **troubleshooting answer format**
 (Verdict → fix-as-code → brief Why → ranked "other things to check" → Verify)
-and the causes menu — both in `references/enable-and-qa.md`.
-Always finish actionable authoring/troubleshooting answers with one observable
-check: the expected content, attribute, or selected experience on the relevant
-page. `?mep` + Highlight Changes alone is not the expected result. Confirm
-element selectors are unique in authored HTML before recommending a broad edit.
-For a proposed row, use concrete synthetic paths/selectors labeled as examples
-when real content is unavailable, rather than leaving the entire fix as
-`<selector>` / `<fragment URL>`. State that selectors match authored/plain HTML
-even when the user supplied one, and verify predicted placeholder output on
-the specified page with the intended experience selected.
+and the causes menu — both in `references/enable-and-qa.md` — and apply the
+answer checklist above.
 
 ## Ground rules that prevent most mistakes
 
@@ -241,15 +242,13 @@ the specified page with the intended experience selected.
   Inspect the source HTML, not the finished DOM.
 - **Be as vague as possible while still unique** (the "goldilocks" method).
   Prefer simplified selectors (`any-marquee primary-cta`) over brittle chains.
-- **MEP targets the first match by default**; add `#_all` to hit every match.
+- **MEP targets the first match by default**; add `#_all` to hit every match
+  only when every match is intended. Otherwise narrow the selector.
 - **Experience-column order is priority**; a user gets the first column they
   match for the entire manifest, not independently per row. Blank cells do
-  **not** inherit actions from `all` or another experience. When adding an
-  audience to an existing manifest, preserve its applicable existing actions
-  in that column; do not advise leaving unrelated rows blank. If existing
-  audience combinations are unknown, propose a separate audience-only manifest
-  for the new change, preserving existing metadata entries and checking
-  cross-manifest conflicts rather than silently dropping other changes.
+  **not** inherit actions from `all` or another experience, so a new column
+  with unrelated rows left blank drops those actions for that audience. See
+  *Answer checklist → Adding to existing personalization*.
 - **Phone qualification is not viewport width alone**: mobile-device detection
   **and** (`window.screen.width < 550` **or** `window.screen.height < 550`),
   evaluated at page load. When explaining phone qualification, include the
@@ -262,11 +261,9 @@ the specified page with the intended experience selected.
   `manifest-execution-order` first (`First` → `Normal` → `Last`), then
   `manifest-type` (`Personalization` → `Promo` → `Test`). Target-delivered
   manifests use the same ordering; Target is not inherently higher priority.
-  Metadata list order is only a tie-breaker when both settings are equal.
-  When explaining priority, state all three stages explicitly: execution order,
-  then type, then stable incoming order when both settings tie (first listed
-  stays first among metadata-listed manifests). Do not abbreviate the third
-  stage away just because the supplied example is resolved by type.
+  When both settings are equal, the stable sort keeps incoming order: among
+  metadata-listed manifests, the first listed stays first. Always state all
+  three stages, even when the example is settled by type.
   Change these settings in each manifest's `helix-info` sheet, not the drawer.
   See `references/enable-and-qa.md` → *Priority: MEP vs Target*.
 
