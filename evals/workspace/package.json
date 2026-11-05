@@ -1,0 +1,8 @@
+{
+  "name": "example-milo-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint libs && stylelint \"libs/**/*.css\""
+  }
+}

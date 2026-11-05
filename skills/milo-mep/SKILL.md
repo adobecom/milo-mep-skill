@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.9"
+  version: "1.1.10"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.9.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.10.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -91,11 +91,8 @@ URL — the `.aem.page` preview URL requires auth).
   alone is not a reason to republish; publication-state checks are read-only,
   while republishing is a separate, explicitly authorized remediation.
 
-**Reading/writing manifest `.xlsx` files:** use the bundled
-`scripts/mep_xlsx.py` (openpyxl vendored in `scripts/vendor/`, no install
-needed) — `read` normalizes an xlsx or published `.json` to columns+rows, and
-`write` builds a new manifest from the template preserving the `readme`/styles.
-Don't hand-parse xlsx (empty cells shift columns). See `references/xlsx-io.md`.
+**Manifest `.xlsx` files:** use `scripts/mep_xlsx.py` (`read`/`write`; no
+install needed). Don't hand-parse xlsx: empty cells shift columns.
 
 ## Response style (all tasks)
 
@@ -130,9 +127,11 @@ these for every response:
   it matches authored/plain HTML, and tell the author to
   confirm it matches exactly the one intended element in the content that
   actually loads, including any replacement fragment. Do not imply an example
-  is already verified. Without `#_all`, a command completes on its first match;
-  `#_include-fragments` widens where it searches, not which match it picks, so
-  mention first-match completion when several fragments may match. Verify the
+  is already verified. Show a corrected selector in a complete example row
+  (action | selector | experience value). Without `#_all`, a command
+  completes on its first match; `#_include-fragments` widens where it
+  searches, not which match it picks, so mention first-match completion when
+  several fragments may match. Verify the
   intended element with Highlight Changes and its final attribute/content.
 - **Adding to existing personalization.** Never offer "if a manifest already
   exists, just add this row to it" for a manifest you have not inspected.
@@ -156,6 +155,13 @@ these for every response:
   reclassify consent to make an experience appear: `non-personalized offer
   test` gives visitors without performance consent a random persisted variant
   with no audience check, which is wrong for audience-targeted content.
+- **Page filters and promo schedules.** Verify both a case that should match
+  and one that should not: the intended pages plus an unrelated page; a time
+  inside the window plus one just outside it. Outside its schedule (or
+  `locales`), a promo manifest loads as Default unless its experience is
+  forced with `?mep`, so check bounds unforced. Bounds are inclusive; a blank
+  schedule `start` or `end` leaves that side open-ended rather than disabling
+  the promo (see `references/source-notes.md` → *Promos*).
 - **Native audiences.** When a new experience needs no Target, say **no Target
   change is needed**; do not recommend disabling existing Target metadata that
   other features use.
@@ -217,21 +223,18 @@ undefined placeholders) from the format doc and `references/enable-and-qa.md`.
 Never flag fragment-URL domains (they're normalized — see `selectors.md`).
 
 ### 3. Author / design a manifest
-**Start from the official template** at `assets/mep-manifest-template.xlsx` —
-copy it as the base for any new manifest. It already contains the `helix-info`
-sheet (with the STEP prompts; default `manifest-type` is `Promo`), a
-`helix-experiences` header row (`action`, `selector`, `page filter (optional)`,
-and a default `all` experience column), an empty `helix-placeholders`, and the
-`readme`. Fill the sheets and **keep the `readme` tab**. When writing an actual
-`.xlsx`, use `scripts/mep_xlsx.py write` (copies the template and injects rows);
-don't build a workbook from scratch (that loses the readme and formatting). See
-`references/xlsx-io.md`.
+**Start from the official template** at `assets/mep-manifest-template.xlsx`
+(default `manifest-type` is `Promo`; one default `all` experience column) and
+**keep its `readme` tab**. Write real files with `scripts/mep_xlsx.py write`,
+never from scratch. See `references/xlsx-io.md`.
 
 Turn a goal ("A/B test the hero CTA for logged-in users on the US Photoshop
 page") into concrete rows: set the manifest type, name the file per
 `references/conventions.md`, pick the right selector (prefer simplified,
 "goldilocks" specificity), the right action, and the right experience-column
-header(s) (rename/add columns beyond the default `all`). Also show it as a table
+header(s) (rename/add columns beyond the default `all`). When the goal names a
+page, fill the row's `page filter (optional)` with that path (a blank filter
+applies on every page that loads the manifest). Also show it as a table
 the user can paste into Excel, and state the filename and folder it lives in.
 
 When the page already has personalization, follow *Answer checklist → Adding
@@ -240,9 +243,8 @@ to existing personalization*.
 ### 4. QA / troubleshoot
 Build `?mep` preview URLs, reason about why an experience isn't applying
 (priority order, page filter mismatch, wrong selector against **plain** HTML,
-Target off, missing localized fragment), and validate a manifest with the
-linter (`node scripts/lint.mjs <json|URL>` or `scripts/lint.html`; xlsx via
-`python scripts/lint_manifest.py <file>` — see `references/linting.md`). Present
+Target off, missing localized fragment), and validate with the linter (see
+the routing table). Present
 the answer in the **troubleshooting answer format**
 (Verdict → fix-as-code → brief Why → ranked "other things to check" → Verify)
 and the causes menu — both in `references/enable-and-qa.md` — and apply the
@@ -286,34 +288,19 @@ answer checklist above.
 
 ## Source authority
 
-The **ultimate** source of truth is the Milo source code. Prefer a **live local
-checkout** if one exists — it's fresher than any snapshot. Check
-`libs/features/personalization/` under a local Milo repo; it's commonly at
-`~/git/milo/libs/features/personalization/` (try that path
-first, else look for a `milo` checkout, else fall back to the bundled snapshot).
-A snapshot is bundled in `assets/source/`, **pinned to a specific `main` commit**
-recorded in `assets/source/SOURCE_VERSION` — so the skill works offline and its
-facts are reproducible. The snapshot covers every file the references cite, not
-just `personalization.js` (also `preview.js`, `utils.js`, `merch.js`,
-`fragment.js`, `lingo.js`, `martech/attributes.js`, etc.); the
-bundled-name → repo-path map is `scripts/source-manifest.txt`.
-`references/source-notes.md` distills the exact tags, actions, flags, selectors,
-matching/priority, consent gating, and promo behavior — consult that (or grep the
-source) for any edge case or when a doc seems vague or dated. When the docs and
-the source disagree, the source wins.
+The Milo source code is the ultimate source of truth; when docs and source
+disagree, the source wins. Prefer a live local checkout
+(`~/git/milo/libs/features/personalization/`, else another `milo` checkout).
+Otherwise use the bundled snapshot in `assets/source/`, pinned to the `main`
+commit in `assets/source/SOURCE_VERSION`. It covers every cited file
+(`personalization.js`, `preview.js`, `utils.js`, `merch.js`, `fragment.js`,
+`lingo.js`, `martech/attributes.js`, and more; map in
+`scripts/source-manifest.txt`). For edge cases, read
+`references/source-notes.md` or grep the source.
 
-**Keeping the snapshot fresh (milo changes fast).** Don't fetch source live per
-invocation — the distilled references are the product, and end users may have no
-network/checkout. Freshness is a **manual, maintainer-side** step (there's no
-auto-update: updating the snapshot only refreshes *this* install + the rebuilt
-`.skill`; other installs need a re-publish). Before re-publishing (or whenever
-milo may have changed): run `python3 scripts/check-source-drift.py` — it diffs
-the bundled snapshot against `main` and flags which **cited symbols** changed.
-On drift: adopt it with `python3 scripts/snapshot-source.py`, review/update the
-affected references + `source-notes.md`, run the repository release checks and
-behavioral evals (see the repository README and `evals/README.md`), then
-run `./package-milo-mep.sh` from the repository root and redistribute the
-generated `milo-mep.skill`. Directory-based installs do not need packaging.
+**Snapshot freshness is maintainer-side.** Don't fetch source live per
+invocation; the distilled references are the product. Maintainers check drift
+with `python3 scripts/check-source-drift.py` and follow the repository README.
 
 Current syntax otherwise follows the public Milo docs
 (https://milo.adobe.com/docs/authoring/features/mep/). Adobe-internal

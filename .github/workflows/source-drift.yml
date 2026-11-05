@@ -1,0 +1,30 @@
+name: Milo source drift
+
+on:
+  schedule:
+    - cron: '17 13 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compare bundled snapshot with adobecom/milo main
+        run: |
+          set +e
+          python3 skills/milo-mep/scripts/check-source-drift.py --ignore-incidental | tee drift.txt
+          status=${PIPESTATUS[0]}
+          {
+            echo '## Milo source drift'
+            echo '```'
+            cat drift.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

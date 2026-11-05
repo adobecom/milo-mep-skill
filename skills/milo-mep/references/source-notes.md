@@ -35,8 +35,14 @@ An experience column header can be any of these (matched in `hasMatch` /
 - **`previouspage-<glob>`** — matches the referrer path (`document.referrer`) via
   the same glob engine as page filters. This is the "came from email / previous
   page" capability.
-- **`countryip(US,CA,...)`** — Akamai/edge-detected country (note `uk` is
-  internally mapped to `gb`). Requires geolocation to be enabled.
+- **`countryip(US,CA,...)`** — visitor country (note `uk` is internally
+  mapped to `gb`). `applyPers()` resolves `config.mep.countryIP` for every
+  non-bot page via `computeDetectedMarketCountry()`: `?country` →
+  `?akamaiLocale` → `country` cookie → `ims_country_code` (only when M@S IMS
+  login is enabled) → edge geo (`akamaiCode`). The former `mepgeolocation`
+  metadata gate was removed. Column names split on commas outside
+  parentheses, so `not countryip(us,ca)` is one negated condition; with no
+  detected country, `matchesCountryList()` is false and the `not` column matches.
   **Case-insensitive:** headers are lowercased at parse time
   (`normalizeKeys`→`toLowerAlpha`, which `.toLowerCase()`s before stripping) and
   the detected country is lowercased at resolution (`resolveDetectedMarketCountry`
@@ -163,7 +169,10 @@ rendering is a separate decoration step (`utils.js` auto-block routing and
   `any-marquee-section`→`main > div:has([class*="marquee"])`,
   `any-header`→`:is(h1,h2,h3,h4,h5,h6)`.
 - A **numeric suffix** (`section3`, `text2`) → `:nth-child(n)` /
-  `:nth-child(n of .class)`. `main > sectionN` collapses to `sectionN`. Unknown
+  `:nth-child(n of .class)`. `:nth-child(n of .class)` counts only siblings
+  under one parent: `media2` never means "the second media block on the
+  page" when each section has one; use `section2 media`.
+  `main > sectionN` collapses to `sectionN`. Unknown
   bare words are treated as **class names** (get a leading `.`). Raw HTML tag
   names pass through untouched.
 - **`in-block:<blockname> <selector>`** — scopes an action to inside a specific
@@ -278,4 +287,13 @@ Promos are scheduled via metadata, not just a manifest reference:
   `name|start|end|manifestPath|locales|cdtStart|cdtEnd` (GMT dates).
 - Regions are `APAC`, `EMEA`, `AMERICAS`, `JP` (locale lists in the file).
 - A promo is disabled outside its `start`/`end` window or its `locales`.
-  `?instant=<date>` overrides "now" for testing.
+  `?instant=<date>` overrides "now" for testing. The start and end are
+  inclusive (`isDisabled` checks `current < start || current > end`).
+- `getRegionalPromoManifests` always wraps `start`/`end` with
+  `GMTStringToLocalDate`, so a blank bound becomes an Invalid Date (still
+  truthy). `isDisabled`'s one-bound check therefore never fires; comparisons
+  with the invalid bound are false, leaving that side **open-ended** (blank
+  end: on from start onward; blank start: on until end).
+- A disabled promo manifest loads as Default (`createDefaultExperiment`)
+  unless its experience is forced with `?mep` (`disabled && !variantOverride`
+  in `personalization.js`), so verify schedule bounds unforced.

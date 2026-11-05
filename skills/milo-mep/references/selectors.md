@@ -87,7 +87,8 @@ Append the attribute name to the element selector. If the element is
 | button container | `any-marquee action-area` |
 | marquee solid button href | `any-marquee primary-cta href` |
 | paragraph after marquee headline | `any-marquee h1 + p` |
-| second media block | `media2` |
+| second media block among siblings (same parent) | `media2` |
+| media block in the second section | `section2 media` |
 | last page section | `section:last-child` |
 
 ## Flags / modifiers

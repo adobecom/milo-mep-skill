@@ -1,0 +1,28 @@
+.marquee {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-l) var(--spacing-s);
+}
+
+.marquee .foreground {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-s);
+}
+
+.marquee .text .action-area {
+  display: flex;
+  gap: var(--spacing-s);
+  margin-top: var(--spacing-m);
+}
+
+@media (min-width: 900px) {
+  .marquee {
+    padding: var(--spacing-l) 0;
+  }
+
+  .marquee .foreground {
+    flex-direction: row;
+    align-items: center;
+  }
+}

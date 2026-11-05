@@ -1,12 +1,15 @@
 # Skill behavioral evaluations
 
-The 28 cases in `cases.json` cover activation (including implicit MEP requests and negative
+The 33 cases in `cases.json` cover activation (including implicit MEP requests and negative
 examples), priority, consent defaults, localization, selectors, experience
 order, trusted fragment hosts, live-edit authorization, page-scoped
 placeholders, forced-preview carry-over, class-attribute replacement,
 existing M@S Studio href updates, forced-preview gating, info-value casing,
-missing info sheets, `remove` cell typos, the LCP image check, and row-level
-country filters. All examples are
+missing info sheets, `remove` cell typos, the LCP image check, row-level
+country filters, negated country lists, numeric selector suffixes, single-`*`
+page filters, promo `?instant` time zones, and `postlcp` first-section limits.
+Cases added in 1.1.10 are synthetic versions of recurring community question
+themes, verified against the pinned source. All examples are
 synthetic. Evidence paths and manual rubrics accompany each case.
 
 Cases marked `split: "holdout"` are reserved as transfer probes: their
@@ -21,7 +24,8 @@ absent from the existing reference material.
    in a **fresh conversation** with normal skill discovery. Do not force-load
    `/milo-mep`: that would invalidate activation testing. Do not expose
    `cases.json`, expected activation, rubrics, or reference answers to the
-   answering agent. Restrict its repository access to the installed skill.
+   answering agent. Restrict its repository access to a copy of the neutral
+   answering workspace (see *Answering workspace*) plus the installed skill.
 3. Capture whether the skill actually loaded from the tool trace, not from the
    agent's claim or MEP words in its answer. If the host cannot expose that
    signal, mark the run blocked; do not infer a routing pass.
@@ -45,7 +49,7 @@ Capture format (include every case ID exactly once):
   "run": {
     "model": "actual model ID from host",
     "host": "agent host and version",
-    "skill_version": "1.1.9",
+    "skill_version": "1.1.10",
     "reviewer": "reviewer identifier",
     "date": "2026-11-03"
   },
@@ -103,6 +107,72 @@ The report preserves the original `run` and adds `grading_skill_version` and
 hashes alongside it. This option acknowledges a historical version; it does
 not validate a changed skill, waive manual completeness, or turn regrading
 into a fresh behavioral run. Without the option, stale versions still fail.
+
+### Answering workspace
+
+Run every case from a copy of `evals/workspace/` with the candidate installed
+under its `.github/skills/` (or the host's equivalent). The fixture is a tiny,
+neutral Milo-style site (a marquee block and global styles) so an answering
+agent sees a realistic code repository instead of a directory that contains
+only the skill. It deliberately has no personalization code, manifests, or
+evaluation material; a test enforces that. Do not add rubric content to it.
+
+### Judge verdicts and check waivers
+
+Pattern checks can miss correct paraphrases. Instead of editing a regex after
+seeing an answer, a reviewer (human or model judge) may record structured
+verdicts in the capture:
+
+```json
+{
+  "review_verdicts": [
+    {"item": 0, "pass": true, "quote": "exact words from the answer", "note": "why it meets item 0"}
+  ],
+  "check_waivers": [
+    {"check": 2, "quote": "exact words from the answer", "reason": "states the concept the pattern screens for"}
+  ]
+}
+```
+
+- `review_verdicts` is optional; when present it must cover every `review`
+  index exactly once. A failed item, a missing note, or a quote that does not
+  appear in the answer fails the case.
+- `check_waivers` may waive only a `checks` pattern that actually missed, and
+  its quote must appear in the answer. `reject` patterns can never be waived.
+  Reports list waivers in `waived_checks` and `waived_check_count`.
+
+Quotes are compared after removing Markdown emphasis/code markers, collapsing
+whitespace, and ignoring case. To prepare an offline judge pass:
+
+```bash
+python3 evals/evaluate.py --judge-prompts /path/to/capture.json > judge-prompts.json
+# Give each prompt to a separate judge conversation; collect JSON objects per case.
+python3 evals/evaluate.py --apply-judgments /path/to/capture.json judgments.json \
+  > judged-capture.json
+```
+
+Judge prompts cover activated positive cases only and include the answer,
+numbered review items, evidence paths, and any missed checks. Judgments may set
+only `correctness_pass`, `completeness_pass`, `review_notes`,
+`review_verdicts`, and `check_waivers`; other keys (for example `answer`) are
+rejected. Keep the original capture and record the judge model alongside it.
+The harness itself still makes no model calls.
+
+### Repeat runs
+
+Activation and phrasing vary between runs. Grade several independent captures
+of the same candidate together (one audit per capture, in order):
+
+```bash
+python3 evals/evaluate.py --responses run1.json run2.json run3.json \
+  --da-audit audit1.jsonl audit2.jsonl audit3.jsonl --min-pass-rate 1.0
+```
+
+The output is `{"aggregate": ..., "runs": [...]}` with per-case
+`passes`, `runs`, and `rate`. A case passes when its rate meets
+`--min-pass-rate` (default `1.0`). Captures must share one skill version and
+be distinct files. A single capture keeps the original report format. Report
+any rate below 1.0 rather than rerunning until a case passes.
 
 Pattern checks ignore Markdown emphasis/code delimiters and accept equivalent
 prose or table predictions. These are concept screens, not proof of correct

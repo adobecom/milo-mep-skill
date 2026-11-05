@@ -333,3 +333,46 @@ test("pinned fragment swaps keep the first selector and chain only forward in so
   const sameSelector = consolidateObjects([manifest("m1", "/a", "/b"), manifest("m2", "/a", "/x")], "fragments");
   assert.equal(sameSelector["/a"].fragment, "/b");
 });
+
+test("pinned numeric block suffixes count siblings, not page order", () => {
+  const modifySelectorTerm = new Function(
+    `${section("const updateEndNumber =", "function getModifiers(")}; return modifySelectorTerm;`,
+  )();
+  assert.equal(modifySelectorTerm("media2"), ".media:nth-child(2 of .media)");
+  assert.equal(modifySelectorTerm("section2"), "main > div:nth-child(2)");
+});
+
+test("pinned countryip needs no geolocation switch and negates a whole country list", () => {
+  assert.ok(!source.includes("mepgeolocation"));
+  assert.match(source, /if \(!config\.mep\.countryIP && !isBot\(\)\) \{\n\s+config\.mep\.countryIP = computeDetectedMarketCountry\(/);
+  const utils = readFileSync(new URL("../skills/milo-mep/assets/source/utils.js", import.meta.url), "utf8");
+  const normCountryCode = new Function(
+    `${utils.slice(utils.indexOf("export function normCountryCode("), utils.indexOf("export function computeDetectedMarketCountry(")).replace(/^export /gm, "")}; return normCountryCode;`,
+  )();
+  const hasCountryMatch = new Function("normCountryCode",
+    `${section("const getCountryList =", "export const matchesCountryFilter =")}
+     ${section("const matchesCountryIP =", "const getVariantInfo =")}; return hasCountryMatch;`,
+  )(normCountryCode);
+  assert.deepEqual("not countryip(us,ca), phone".split(/,(?![^(]*\))/), ["not countryip(us,ca)", " phone"]);
+  assert.equal(hasCountryMatch("countryip(us,ca)", { mep: { countryIP: "CA" } }), true);
+  assert.equal(hasCountryMatch("countryip(us,ca)", { mep: { countryIP: "jp" } }), false);
+  assert.equal(hasCountryMatch("countryip(us,ca)", { mep: {} }), false);
+  assert.ok(source.includes("name.split(/,(?![^(]*\\))/)"));
+});
+
+test("pinned promo schedule bounds are inclusive and a blank bound is open-ended", () => {
+  const promo = readFileSync(new URL("../skills/milo-mep/assets/source/promo-utils.js", import.meta.url), "utf8");
+  const pick = (start, end) => promo.slice(promo.indexOf(start), promo.indexOf(end)).replace(/^export /gm, "");
+  const toDate = new Function(`${pick("const GMTStringToLocalDate =", "const APAC =")}; return GMTStringToLocalDate;`)();
+  const isDisabled = new Function("localeCode",
+    `${pick("export const isDisabled =", "const isManifestWithinLocale =")}; return isDisabled;`)("us");
+  assert.ok(promo.includes("start: GMTStringToLocalDate(start),"));
+  const at = (instant) => new URLSearchParams({ instant });
+  const event = (start, end) => ({ start: toDate(start), end: toDate(end) });
+  const black = event("2026-11-27T00:00:00", "2026-11-30T23:59:59");
+  assert.equal(isDisabled(black, at("2026-11-26T23:59:59Z")), true);
+  assert.equal(isDisabled(black, at("2026-11-27T00:00:00Z")), false);
+  assert.equal(isDisabled(event("2026-11-27T00:00:00", ""), at("2027-06-01T00:00:00Z")), false);
+  assert.equal(isDisabled(event("", "2026-11-30T00:00:00"), at("2020-01-01T00:00:00Z")), false);
+  assert.match(source, /if \(disabled && !variantOverride\?\.\[normalizePath\(manifestPath\)\]\) \{\n\s+return createDefaultExperiment\(info\);/);
+});

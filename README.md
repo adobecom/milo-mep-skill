@@ -121,11 +121,15 @@ and the source disagree, the source wins.**
 
 Milo changes fast. Freshness is a deliberate **maintainer-side** step — there is
 no live fetch per invocation, and updating the snapshot only refreshes *this*
-copy (other installs need a re-publish). Before re-publishing, or whenever Milo
-may have changed:
+copy (other installs need a re-publish). The **Milo source drift** workflow
+(`.github/workflows/source-drift.yml`) runs the check weekly and on demand. It
+fails when a cited symbol or any `libs/features/personalization/` file
+changed; drift elsewhere is reported in the job summary without failing.
+Before re-publishing, or whenever Milo may have changed:
 
 ```bash
 # flag whether any CITED source symbol changed vs main
+# (--ignore-incidental exits 0 when only uncited, non-personalization code moved)
 python3 skills/milo-mep/scripts/check-source-drift.py
 
 # adopt the latest main + re-pin SOURCE_VERSION, then review refs & re-lint
