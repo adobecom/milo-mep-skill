@@ -146,6 +146,12 @@ these for every response:
   existing personalization still applies for the affected audience. A separate
   manifest avoids column-inheritance problems; it does not prove there are no
   conflicts.
+- **Country- or consent-gated results.** Say how to reproduce each gate:
+  spoof the visitor country with the MEP button's region spoofer
+  (`?akamaiLocale=<cc>`) and compare an in-scope and an out-of-scope country;
+  set each relevant consent state; leave that manifest's experience unforced
+  (a forced `?mep` variant bypasses consent and country gates). Name the
+  expected result for each case. Page locale is not visitor country.
 - **Placeholder predictions.** Read `references/manifest-schema.md` even when
   inspecting the runtime directly. Label the **stored value**, **MEP
   substitution**, and **final page rendering** separately. An empty stored

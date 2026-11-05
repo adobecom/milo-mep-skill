@@ -22,6 +22,13 @@ runtime.)
   (`--da-audit`) instead of trusting captured tool calls.
 - Added pinned-source tests for manifest priority sorting and first-match
   command completion.
+- After the first targeted Sol run (`ee45f37`), added a country/consent-gate
+  checklist item (spoof with `akamaiLocale`, compare in/out-of-scope
+  countries, keep the manifest unforced). The forced-preview and row-country
+  cases therefore no longer test untuned transfer. Also accepted equivalent
+  "forcing"/"all five rows" wording, rejected only asserted "MEP is broken",
+  and dropped two over-strict review items (naming the template; a uniqueness
+  check for a selector the user did not propose).
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
 ## 2026-11-04
