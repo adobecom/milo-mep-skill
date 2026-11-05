@@ -366,6 +366,16 @@ class EvalTests(unittest.TestCase):
             "heldout-lcp-check": "meplcp improves LCP in preview only and does not affect production visitors; "
                                  "it checks image size before personalization in the first section.",
             "heldout-row-country-filter": "Yes. manifest-country-restriction applies to one row; set jp, spoof with ?mep.",
+            "heldout-page-filter-single-star": "It is a regex anchored to the full path, but the locale prefix is "
+                                               "stripped before matching /br/ pages; check ?mep.",
+            "heldout-promo-instant-timezone": "Use ?instant=2026-11-27T00:00:00Z. The instant value is always "
+                                              "treated as GMT, never local time zone, so you were before the start.",
+            "heldout-postlcp-first-section": "postlcp can still change the first section marquee; skip nothing. "
+                                             "Set target on or move it below; LCP; check ?mep.",
+            "country-not-list": "One column: not countryip(us,ca). Geolocation must be enabled first; unknown "
+                                "visitors get Default. Spoof with akamaiLocale and ?mep.",
+            "numeric-suffix-siblings": "Siblings of the same parent: section2 media in plain HTML, but "
+                                       "media:nth-of-type(2) works too; check ?mep.",
         }
         for case_id, answer in wrong.items():
             with self.subTest(case=case_id):
@@ -436,6 +446,129 @@ class EvalTests(unittest.TestCase):
                 path.write_text(json.dumps(capture))
                 result = subprocess.run(command + ["--responses", str(path)], capture_output=True, text=True)
                 self.assertEqual(result.returncode, expected, result.stderr)
+
+    def test_answering_workspace_fixture_is_neutral(self):
+        workspace = ROOT / "evals/workspace"
+        files = [p for p in workspace.rglob("*") if p.is_file()]
+        self.assertIn(workspace / "libs/blocks/marquee/marquee.css", files)
+        for path in files:
+            text = path.read_text()
+            with self.subTest(path=str(path.relative_to(ROOT))):
+                self.assertIsNone(re.search(r"personaliz|manifest|\bmep\b|evaluat|rubric|target|experiment|skill",
+                                            text, re.I))
+
+    def paraphrase_capture(self):
+        """remove-typo answer that states check 0's concept without the word 'typo'."""
+        capture = copy.deepcopy(self.capture)
+        index = next(i for i, c in enumerate(self.cases) if c["id"] == "heldout-remove-typo")
+        answer = capture["responses"][index]["answer"].replace("flase is a typo.", "The cell value is spelled wrong.")
+        capture["responses"][index]["answer"] = answer
+        return capture, index
+
+    def test_quote_backed_waiver_covers_a_paraphrased_check_only(self):
+        capture, index = self.paraphrase_capture()
+        result = grade(self.cases, capture)["results"][index]
+        self.assertFalse(result["automatic_pass"])
+        self.assertIn("missing concept", result["failures"][0])
+
+        waiver = {"check": 0, "quote": "The cell value is  **spelled wrong**.", "reason": "Same concept as typo."}
+        capture["responses"][index]["check_waivers"] = [waiver]
+        report = grade(self.cases, capture)
+        self.assertTrue(report["passed"], json.dumps(report["results"][index]))
+        self.assertEqual(report["results"][index]["waived_checks"], [0])
+        self.assertEqual(report["waived_check_count"], 1)
+
+        for bad, message in (({**waiver, "quote": "flase is a typo"}, "quote not found"),
+                             ({**waiver, "check": 1}, "waived but not missed"),
+                             ({**waiver, "check": 99}, "invalid check waiver"),
+                             ({**waiver, "reason": " "}, "reason missing")):
+            capture["responses"][index]["check_waivers"] = [bad]
+            failures = grade(self.cases, capture)["results"][index]["failures"]
+            self.assertTrue(any(message in f for f in failures), failures)
+
+    def test_waivers_cannot_override_forbidden_assertions(self):
+        capture, index = self.paraphrase_capture()
+        capture["responses"][index]["answer"] += " Note that flase is treated as false."
+        capture["responses"][index]["check_waivers"] = [
+            {"check": 0, "quote": "spelled wrong", "reason": "Same concept as typo."}]
+        result = grade(self.cases, capture)["results"][index]
+        self.assertFalse(result["pass"])
+        self.assertTrue(any("forbidden assertion" in f for f in result["failures"]))
+
+    def test_review_verdicts_must_cover_every_item_and_quote_the_answer(self):
+        index = next(i for i, c in enumerate(self.cases) if c["id"] == "heldout-remove-typo")
+        response = self.capture["responses"][index]
+        verdicts = [{"item": i, "pass": True, "quote": None, "note": "ok"}
+                    for i in range(len(self.cases[index]["review"]))]
+        response["review_verdicts"] = verdicts
+        self.assertTrue(grade(self.cases, self.capture)["results"][index]["pass"])
+        for mutate, message in ((lambda v: v.pop(), "exactly once"),
+                                (lambda v: v[0].update({"pass": False}), "review item 0 failed"),
+                                (lambda v: v[1].update({"quote": "not in the answer"}), "quote not found"),
+                                (lambda v: v[2].update({"note": ""}), "note missing")):
+            response["review_verdicts"] = copy.deepcopy(verdicts)
+            mutate(response["review_verdicts"])
+            failures = grade(self.cases, self.capture)["results"][index]["failures"]
+            self.assertTrue(any(message in f for f in failures), failures)
+        response["review_verdicts"] = "all good"
+        self.assertFalse(grade(self.cases, self.capture)["results"][index]["pass"])
+
+    def test_judge_prompts_cover_positive_answers_and_list_missed_checks(self):
+        from evaluate import judge_prompts
+        capture, index = self.paraphrase_capture()
+        prompts = {p["id"]: p["prompt"] for p in judge_prompts(self.cases, capture)}
+        self.assertEqual(set(prompts), {c["id"] for c in self.cases if c["activate"]})
+        typo = prompts["heldout-remove-typo"]
+        self.assertIn("did not match", typo)
+        self.assertIn(self.cases[index]["checks"][0], typo)
+        self.assertIn(self.cases[index]["review"][2], typo)
+        self.assertNotIn("did not match", prompts["manifest-priority"])
+        self.assertNotIn("reference_answer", typo)
+
+    def test_apply_judgments_only_sets_judge_fields(self):
+        from evaluate import apply_judgments
+        judgment = {"id": "manifest-priority", "correctness_pass": False, "review_notes": "judge"}
+        merged = apply_judgments(self.capture, [judgment])
+        response = next(r for r in merged["responses"] if r["id"] == "manifest-priority")
+        self.assertFalse(response["correctness_pass"])
+        self.assertTrue(next(r for r in self.capture["responses"] if r["id"] == "manifest-priority")["correctness_pass"])
+        with self.assertRaises(ValueError):
+            apply_judgments(self.capture, [{**judgment, "answer": "rewritten"}])
+        with self.assertRaises(ValueError):
+            apply_judgments(self.capture, [{**judgment, "id": "unknown"}])
+
+    def test_cli_repeat_runs_report_per_case_pass_rates(self):
+        command = [sys.executable, str(ROOT / "evals/evaluate.py")]
+        failing = copy.deepcopy(self.capture)
+        failing["run"]["date"] = "2026-11-04"
+        failing["responses"][0]["correctness_pass"] = False
+        with tempfile.TemporaryDirectory() as temp:
+            paths = [Path(temp) / f"run{i}.json" for i in range(3)]
+            audits = [Path(temp) / f"audit{i}.jsonl" for i in range(3)]
+            for i, (path, audit) in enumerate(zip(paths, audits)):
+                capture = failing if i == 2 else {**copy.deepcopy(self.capture),
+                                                   "run": {**self.capture["run"], "date": f"2026-11-0{i + 1}"}}
+                path.write_text(json.dumps(capture))
+                audit.write_text("".join(json.dumps(call) + "\n" for call in REFERENCE_DA_CALLS))
+            base = command + ["--responses", *map(str, paths), "--da-audit", *map(str, audits)]
+            result = subprocess.run(base, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            summary = json.loads(result.stdout)["aggregate"]
+            first = summary["cases"][0]
+            self.assertEqual((first["passes"], first["runs"], first["pass"]), (2, 3, False))
+            self.assertTrue(all(c["pass"] for c in summary["cases"][1:]))
+            result = subprocess.run(base + ["--min-pass-rate", "0.6"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for args in (["--responses", str(paths[0]), str(paths[0])],
+                         ["--responses", *map(str, paths), "--da-audit", str(audits[0])],
+                         ["--responses", *map(str, paths[:2]), "--min-pass-rate", "0"]):
+                self.assertEqual(subprocess.run(command + args, capture_output=True).returncode, 2)
+            mixed = json.loads(paths[1].read_text())
+            mixed["run"]["skill_version"] = "1.1.2"
+            paths[1].write_text(json.dumps(mixed))
+            result = subprocess.run(command + ["--responses", *map(str, paths[:2]),
+                                               "--evaluated-skill-version", "1.1.2"], capture_output=True)
+            self.assertEqual(result.returncode, 2)
 
 
 if __name__ == "__main__":

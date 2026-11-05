@@ -1,0 +1,11 @@
+:root {
+  --spacing-s: 16px;
+  --spacing-m: 24px;
+  --spacing-l: 40px;
+  --grid-container-width: 83.4%;
+}
+
+main > .section {
+  margin: 0 auto;
+  max-width: var(--grid-container-width);
+}

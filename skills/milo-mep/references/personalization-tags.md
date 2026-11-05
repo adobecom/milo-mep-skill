@@ -65,8 +65,12 @@ request lands. Route questions through your team's MEP support channel.
 - **`previouspage-<glob>`** — matches the **referrer** path (where the visitor
   came from) using the same glob engine as page filters. Powers "came from
   email / previous page" targeting.
-- **`countryip(US,CA,...)`** — Akamai/edge-detected country (note `uk` maps to
-  `gb` internally). Requires geolocation enabled.
+- **`countryip(US,CA,...)`** — visitor country (note `uk` maps to `gb`
+  internally). Resolved on every MEP page; no metadata switch is needed.
+  Precedence: `?country` → `?akamaiLocale` → `country` cookie → IMS country
+  (only with M@S IMS login) → edge geo. `not countryip(us,ca)` in **one**
+  column means "neither US nor CA"; when no country is detected,
+  `countryip(...)` is false, so that `not` column matches.
 - **`lob-<x>`** — line-of-business match; **`registered`** — matches when an
   event-registration is present.
 - **`target-`** — an Adobe Target/AJO activity/experience. The header must

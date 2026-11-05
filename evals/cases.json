@@ -287,6 +287,59 @@
       "review": ["Target configuration outside Milo must not activate MEP."],
       "evidence": ["skills/milo-mep/SKILL.md"],
       "reference_answer": ""
+    },
+    {
+      "id": "country-not-list",
+      "prompt": "On our Milo /example/pricing page, visitors in the US and Canada should keep the default hero, and everyone else should see /example/fragments/intl-hero. Can one experience column do this, and do we need to turn on geolocation metadata first?",
+      "activate": true,
+      "checks": ["not countryip\\(\\s*(?:us\\s*,\\s*ca|ca\\s*,\\s*us)\\s*\\)", "(?:one|single|same) (?:experience )?column", "(?:\\bno\\b|not|n.t|without)[^\\n]{0,80}(?:metadata|switch|flag|geolocation)|(?:geolocation|metadata)[^\\n]{0,60}(?:removed|not needed|no longer|not required)", "unknown|no (?:detected )?country|undetected|not detected|(?:can.t|cannot) be detected", "akamaiLocale|spoof", "Highlight Changes|\\?mep"],
+      "reject": ["geolocation (?:metadata )?(?:must|needs to|has to) be (?:enabled|on|turned on|set)", "(?<!n.t )(?<!not )(?:you must|you.ll need to|you need to|first) (?:enable|turn on|add|set)[^\\n]{0,20}(?:mepgeolocation|geolocation)"],
+      "review": ["Uses one column headed not countryip(us,ca); the comma inside parentheses keeps one negated condition. Does not propose not countryip(us), not countryip(ca), which ORs to everyone.", "Says no geolocation metadata is needed: country resolves on every MEP page (the mepgeolocation switch was removed), with ?country/?akamaiLocale/country cookie taking precedence over edge geo.", "Notes that visitors with no detected country match the not column and get the intl hero.", "Gives a concrete example row whose selector is described as matching authored/plain HTML, and verifies with akamaiLocale for an outside country plus us and ca: intl hero only outside US/CA."],
+      "evidence": ["skills/milo-mep/references/personalization-tags.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/assets/source/utils.js"],
+      "reference_answer": "Yes. One experience column headed not countryip(us,ca) does it. The comma inside the parentheses keeps it a single condition, so it matches every visitor whose country is neither US nor CA. Commas outside parentheses OR conditions, so splitting it into two not conditions would match everyone.\n\nExample row (synthetic): replace | any-marquee | not countryip(us,ca) = /example/fragments/intl-hero. The selector matches authored/plain HTML; confirm it matches exactly the one intended hero.\n\nNo geolocation metadata is needed. The old mepgeolocation switch was removed; Milo resolves visitor country on every MEP page (?country, then ?akamaiLocale, then the country cookie, then edge geo). If no country is detected, countryip(...) is false, so the not column matches and those visitors also get the intl hero.\n\nVerify on /example/pricing?akamaiLocale=de: the intl hero shows. With akamaiLocale=us and akamaiLocale=ca the default hero stays. Clear any country cookie or ?country parameter first, because they take precedence. Use ?mep with Highlight Changes to confirm the selected experience."
+    },
+    {
+      "id": "numeric-suffix-siblings",
+      "prompt": "Our Milo /example/landing page has three sections, each containing one media block. I used the MEP selector media2 to replace the second one, but nothing changes. Why, and what selector should I use?",
+      "activate": true,
+      "checks": ["sibling|same parent|(?:one|a single|the same) parent|same section|within (?:a|one|its|the same) (?:parent|section)", "section ?2 \\.?media", "plain|authored|unrendered|source HTML", "Highlight Changes|\\?mep"],
+      "reject": ["media:nth-of-type\\(2\\) (?:works|will work|selects)"],
+      "review": ["Explains media2 becomes .media:nth-child(2 of .media), counting only media siblings under one parent, so it matches nothing when each section has one.", "Recommends section2 media (main > div:nth-child(2) .media) in a concrete row.", "States the selector matches authored/plain HTML and to confirm it matches exactly the one intended media block in the intended section.", "Verifies on the page that only the second section's media block changes."],
+      "evidence": ["skills/milo-mep/references/selectors.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "media2 only means the second media block among siblings under one parent. Milo turns media2 into .media:nth-child(2 of .media), which counts .media children of the same parent. Each section holds one media block, so none is the second one and the row matches nothing.\n\nUse section2 media instead (Milo expands it to main > div:nth-child(2) .media):\n\n| action | selector | all |\n|---|---|---|\n| replace | section2 media | /example/fragments/landing-media |\n\nThe selector runs against authored/plain HTML. Confirm section 2 is the intended section in the plain HTML and that the selector matches exactly the one intended media block.\n\nVerify on /example/landing?mep with Highlight Changes: the second section's media block shows the replacement, and the other two stay unchanged."
+    },
+    {
+      "id": "heldout-page-filter-single-star",
+      "split": "holdout",
+      "prompt": "A row in our Milo personalization manifest uses the page filter /example/products/* but it doesn't apply on /example/products/photo or on the Brazil page /br/example/products. Why not, and what should the filter be?",
+      "activate": true,
+      "checks": ["regex|quantifier", "anchor|whole path|full path|entire path|start of the path", "locale prefix|/br/", "Highlight Changes|\\?mep"],
+      "reject": ["locale prefix (?:is )?(?:stripped|ignored|removed) (?:before|when|during)"],
+      "review": ["Explains that only a double asterisk becomes a wildcard; a single asterisk is a regex quantifier, so /example/products/* matches only /example/products with optional slashes.", "Explains the filter is anchored against the full pathname, which includes the /br locale prefix, so a leading double-asterisk glob is needed.", "Gives a working filter such as **/example/products(/**)? (or **/example/products/** plus a note that it excludes the landing page).", "Verifies both URLs, and an unrelated page, with ?mep and Highlight Changes."],
+      "evidence": ["skills/milo-mep/references/personalization-tags.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "Neither URL matches because a single * is not a wildcard in a MEP page filter. Milo only turns ** into .* and then tests the whole pathname as an anchored, case-insensitive regex. In /example/products/* the lone * is a regex quantifier (zero or more slashes), so it matches only /example/products and /example/products/. The pathname also includes the locale prefix, so /br/example/products fails at the start of the path.\n\nFix:\n\n| page filter (optional) |\n|---|\n| **/example/products(/**)? |\n\nThat matches /example/products, /example/products/photo, /br/example/products and /br/example/products/photo.html. Use **/example/products/** only if the landing page itself should be excluded.\n\nVerify on /example/products/photo?mep and /br/example/products?mep: Highlight Changes shows the row's change on both, and an unrelated page such as /example/pricing stays unchanged."
+    },
+    {
+      "id": "heldout-promo-instant-timezone",
+      "split": "holdout",
+      "prompt": "Our Milo Black Friday promo schedule starts at 2026-11-27T00:00:00 GMT. I tried previewing /example/sale with ?instant=2026-11-27T00:00:00 from our Tokyo office, and it still shows the old page. How do I preview the exact start?",
+      "activate": true,
+      "checks": ["instant=2026-11-27T00:00(?::00)?(?:\\.000)?(?:Z|%2B00:?00)", "local|time ?zone", "GMT|UTC", "before"],
+      "reject": ["instant[^\\n]{0,60}always (?:treated|interpreted|read|parsed) as (?:GMT|UTC)"],
+      "review": ["Explains schedule start/end are GMT but ?instant without Z or an offset is parsed as browser local time, so Tokyo midnight is 15:00 GMT the day before and still before the start.", "Gives ?instant=2026-11-27T00:00:00Z (or a URL-encoded offset) as the fix.", "Mentions that outside the window the promo manifest loads as Default unless forced with ?mep.", "Verifies with an instant just before and at the start: original page, then the promo change."],
+      "evidence": ["skills/milo-mep/references/mep-button.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/promo-utils.js", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "Add Z: use /example/sale?instant=2026-11-27T00:00:00Z. Schedule start and end are read as GMT, but Milo parses ?instant with new Date(), so a date-time without Z or an offset is browser local time. In Tokyo, local midnight is 2026-11-26T15:00 GMT, which is still before the start, so the promo manifest is disabled and loads as Default (unless forced with ?mep). Prefer Z over +00:00, because a + in a query string decodes to a space unless written as %2B.\n\nVerify: /example/sale?instant=2026-11-26T23:59:00Z shows the original page, and ?instant=2026-11-27T00:00:00Z shows the promo change. Confirm with ?mep and Highlight Changes."
+    },
+    {
+      "id": "heldout-postlcp-first-section",
+      "split": "holdout",
+      "prompt": "We set the target metadata to postlcp on our Milo /example/hub page for speed. Since then, the Target activity that swaps the marquee in the first section never shows, though its below-the-fold changes still work. Why, and what are our options?",
+      "activate": true,
+      "checks": ["first section|section ?1|section one", "skip|ignor|never appl|not appl|(?:can.t|cannot|won.t|doesn.t) (?:change|touch|modify|update)", "target[^\\n]{0,40}\\bon\\b|\\bon\\b[^\\n]{0,40}target", "LCP|perform|block|slower", "below|move|another section|later section|second section", "Highlight Changes|\\?mep"],
+      "reject": ["postlcp[^\\n]{0,60}(?:can|will|does) (?:still )?(?:change|update|swap|apply to)[^\\n]{0,30}(?:first section|section 1|marquee|hero)"],
+      "review": ["Explains that postlcp applies Target-delivered manifests after the LCP section loads, and Milo skips commands whose element is inside the first section (and skips replacePage).", "Options: target on (blocks rendering until Target responds; performance cost), or move the change below the first section; optionally a metadata-listed MEP manifest when the audience is native, not a Target segment.", "Does not claim a longer Target timeout fixes it.", "Verifies the marquee swap with the activity's experience after the change, using ?mep and Highlight Changes."],
+      "evidence": ["skills/milo-mep/references/enable-and-qa.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "With target set to postlcp, Milo applies Target-delivered manifests only after the first (LCP) section has loaded, and it skips every command whose element is inside the first section. It also skips replacePage. So the marquee swap never applies, while below-the-fold rows still do. A longer Target timeout does not change this.\n\nOptions:\n- Set target to on for this page. Target can then change the first section, but page rendering waits for Target, which costs LCP performance.\n- Move the tested change below the first section and keep postlcp.\n- If the audience is native (device, locale, sign-in and similar), deliver the marquee change in a metadata-listed MEP manifest instead, which applies before LCP.\n\nVerify after the change: open /example/hub?mep, select the activity's experience, and use Highlight Changes to confirm the first-section marquee shows the variant."
     }
   ]
 }

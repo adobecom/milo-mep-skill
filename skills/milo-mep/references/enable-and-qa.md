@@ -43,8 +43,10 @@ Recognize them when auditing a page:
 | `target` | Adobe Target integration (`on`/`postlcp`/`off`) |
 | `xlg` | entitlement (XLG) resolution |
 | `ajo` | Adobe Journey Optimizer integration |
-| `mepgeolocation` | enables geo/`countryip` resolution |
 | `mep-marketing-decrease` | marketing-decrease consent handling |
+
+There is no `mepgeolocation` switch: Milo removed it, and `countryip`
+resolves on every MEP page (see `personalization-tags.md`).
 
 So a page whose pill shows personalization active with **no** inline `personalization`
 path is usually driven by `personalization-v2` + the spreadsheet/Target, not a bug.

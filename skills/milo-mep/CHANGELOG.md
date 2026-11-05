@@ -3,6 +3,32 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
+## 2026-11-06
+
+**Skill release 1.1.10 — leaner entry point and evaluation tooling (unreleased candidate)**
+- Trimmed `SKILL.md`: condensed template, xlsx, linter, and source-authority
+  text that duplicated the routing table or references, and moved
+  maintainer-only snapshot refresh steps to the repository README. The
+  answer checklist, ground rules, and live-edit boundaries are unchanged.
+- `check-source-drift.py` now also tracks symbols cited in backticks across
+  `SKILL.md` and references, separates personalization-feature changes from
+  incidental ones (`--ignore-incidental`), and fails when a fetch fails.
+  A weekly repository workflow runs it.
+- Evaluation harness: quote-backed judge verdicts and check waivers (reject
+  patterns stay unwaivable), offline judge-prompt export, repeat-run pass
+  rates, and a neutral answering workspace fixture.
+- Corrected stale references found while mining community questions: the
+  `mepgeolocation` gate no longer exists (Milo resolves `countryip` on every
+  MEP page; documented country precedence and that `not countryip(...)`
+  matches when no country is detected), and `media2` counts siblings under
+  one parent rather than page order (use `section2 media`). Added
+  pinned-source tests for both.
+- Added five synthetic cases (33 total) from recurring community themes:
+  regular cases for the two corrections, and held-out cases for single-`*`
+  page filters, promo `?instant` time zones, and `postlcp` first-section
+  limits, with adverse controls. The held-out scenarios are not in the skill.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 ## 2026-11-05
 
 **Skill release 1.1.9 — consolidated answer checklist and refreshed source (validated)**
