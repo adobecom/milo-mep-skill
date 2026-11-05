@@ -34,7 +34,7 @@
       "id": "execution-before-type",
       "prompt": "Does a Target-delivered First Promo manifest sort before a metadata-delivered Normal Personalization manifest on Milo?",
       "activate": true,
-      "checks": ["(?:yes|before|earlier)", "execution.{0,10}order", "(?:before type|precedence over type|before.*manifest-type|execution.{0,20}(?:first|step 1).{0,150}(?:then type|type.{0,30}(?:ties|step 2))|First.{0,30}beats.{0,30}Normal.{0,70}type comparison)"],
+      "checks": ["(?:yes|before|earlier)", "execution.{0,10}order", "(?:before type|precedence over type|before.*manifest-type|execution.{0,20}(?:first|step 1).{0,150}(?:then type|type.{0,30}(?:ties|step 2))|First.{0,30}beats.{0,30}Normal.{0,70}type comparison|execution.{0,10}order.{0,150}type,? (?:only )?(?:if|when) (?:tied|equal)|type.{0,20}(?:if|when|only (?:if|when)) (?:execution.{0,20})?(?:tied|equal|ties))"],
       "reject": ["(?i)Personalization\\s+always\\s+(?:wins|comes first)"],
       "review": ["Answer yes because execution order precedes type, not because the source is Target.", "Distinguish sorting from action-specific final results."],
       "evidence": ["skills/milo-mep/references/enable-and-qa.md"],
