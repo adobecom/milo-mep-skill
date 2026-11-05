@@ -39,6 +39,10 @@ runtime.)
   applies to authoring answers. The lifecycle and remove-typo cases now also
   informed instructions. Accepted "I only read …" and "matches exactly one
   intended CTA" as equivalent wording.
+- After the targeted Sol run (`2995f0a`), corrected the gate item: forcing
+  bypasses consent and `manifest-country-restriction`, not row-level
+  page/country filters. Added an adverse control for that overstatement and
+  accepted consent-state tables and "matches exactly the one intended CTA".
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
 ## 2026-11-04

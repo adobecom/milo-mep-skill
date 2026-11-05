@@ -150,7 +150,8 @@ these for every response:
   spoof the visitor country with the MEP button's region spoofer
   (`?akamaiLocale=<cc>`) and compare an in-scope and an out-of-scope country;
   set each relevant consent state; leave that manifest's experience unforced
-  (a forced `?mep` variant bypasses consent and country gates). Name the
+  (forcing bypasses consent and `manifest-country-restriction`, but row-level
+  page/country filters still apply). Name the
   expected result for each case. Page locale is not visitor country. Never
   reclassify consent to make an experience appear: `non-personalized offer
   test` gives visitors without performance consent a random persisted variant
