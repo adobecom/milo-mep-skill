@@ -232,7 +232,8 @@ generated HTML **without rewriting it**.
 
 Pinned-source tests execute isolated functions from the bundled Milo snapshot
 to check page-filtered placeholders, explicit preview overrides, selector
-attribute parsing, and attribute writes, with
+attribute parsing, attribute writes, manifest priority sorting, and
+first-match command completion, with
 browser/service dependencies stubbed. They are not end-to-end browser tests
 and do not certify every deployed site's runtime version.
 

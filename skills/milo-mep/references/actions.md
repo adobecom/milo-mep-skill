@@ -103,9 +103,9 @@ the resulting attribute. For M@S Studio links, see `mas-caas-fragments.md`.
 - A **blank** experience cell = no change for that experience on that row.
 - For `remove`, the removal is **skipped only** when the cell is blank or the
   value is exactly `false` (case-insensitive: parse-time check
-  `line[vn].toLowerCase() === 'false'`, line 835; **not trimmed**). **Any other
-  non-blank value deletes** the element (command-time `content !== 'false'`,
-  line 306).
+  `line[vn].toLowerCase() === 'false'` in `getVariantInfo`; **not trimmed**). **Any other
+  non-blank value deletes** the element (command-time `content !== 'false'` in
+  `COMMANDS.remove`).
   - `TRUE`, `true`, and `1` all mean "remove" and are equally valid — **do not
     flag `1` vs `TRUE`.**
   - But because *only* the exact word `false` skips, a value that was **meant**

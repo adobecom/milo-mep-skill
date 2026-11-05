@@ -258,6 +258,8 @@ fragments or inventing page-specific audience columns.
 11. **Geo restriction** — a `manifest-country-restriction` list that excludes
    the visitor's country forces the Default variant. For a single row, check
    `country filter` / `country filter optional` instead.
+   A forced `?mep` variant overrides both consent and geo restriction, so
+   preview success does not prove eligibility; see `mep-button.md`.
 
 Reach for the `?mep` button's **Highlight Changes** and per-manifest experience
 dropdown to confirm what's actually being applied.

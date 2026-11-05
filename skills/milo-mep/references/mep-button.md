@@ -99,7 +99,15 @@ button (`.mep-footer a.con-button`) when controls change:
 | MAS highlight | `mepMasHighlight=true` | `data-mep-mas-highlight` |
 | Turn off preview button | `mepButton=off` | — |
 | Manifest Parameters | bare `mep` (no manifest values) | — |
+| LCP Img Check | bare `meplcp` | — |
 | Region/market spoofer | `akamaiLocale=<code>` and, for supported countries, `mboxOverride.browserIp=<ip>` (+ `mepMasMarket=true`) | — |
+
+**LCP Img Check (`meplcp`)** works only when preview mode is active. Before
+manifests apply, Milo clones the first section (`body > main > div`) and keeps
+a copy of the loaded experiments. After personalization it lazy-loads
+`mep-lcp-check.js` to compare LCP images. That module is not in the bundled
+snapshot, so do not describe its report format; treat it as a preview
+diagnostic, not a production behavior change.
 
 Clicking **Preview** navigates to that URL, so the chosen experiences and
 toggles are locked in (and shareable). `?mep=off` turns off the `?mep`
@@ -111,6 +119,15 @@ The reverse direction is `parseMepParam()` in `personalization.js`: it splits
 `?mep` on `---` then `--` into `{ manifestPath: variant }` and stores it as
 `config.mep.variantOverride`, which `getPersonalizationVariant` honors before any
 audience matching — that's how a forced experience wins.
+
+A forced variant also wins over manifest-level gates. Consent gating and
+`manifest-country-restriction` force Default only through `overrideVariant`,
+which never replaces an existing override, and a forced manifest loads even
+when disabled. So a `?mep` preview can show an experience that
+consent-declined or out-of-country visitors will not receive. To QA those
+gates, load the page **without** a forced variant for that manifest, with the
+intended consent state and spoofed country. Row-level page/country filters
+still apply to forced variants.
 
 ### A manifest appears on the wrong page after previewing
 
@@ -218,6 +235,7 @@ from.
 | `akamaiLocale=<code>` | spoof Milo's detected country/market |
 | `mboxOverride.browserIp=<ip>` | align Target's IP-based geo-fencing with the spoofed country |
 | `mepMasMarket=true` | persist the M@S market spoof across reloads |
+| `meplcp` | preview-only LCP image check (see below) |
 | `?instant=<iso-date>` | simulate "now" (for promo scheduling windows) |
 
 ## Limitations

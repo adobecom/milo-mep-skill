@@ -67,6 +67,8 @@ Manifests are sorted by `executionOrder`, a string `"<execOrderIdx>-<typeIdx>"`:
 - `manifest-execution-order`: `First`=0, `Normal`=1, `Last`=2 (primary sort key).
 - `manifest-type`: `Personalization`=0, `Promo`=1, `Test`=2 (secondary).
 - Missing info → default `"1-1"`.
+- Values match **case-sensitively** (`indexOf`); an unrecognized value such as
+  `first` or `personalization` falls back to index 1 (`Normal` / `Promo`).
 
 This is **one shared sort for MEP-native and Target-delivered manifests**:
 `init()` combines metadata and Target sources, and `applyPers()` parses their
@@ -87,7 +89,14 @@ concatenated in order by `consolidateArray()`; `replace` skips an element
 already marked replaced, but `updateAttribute` can write the same attribute
 again. `categorizeActions()` also overwrites `replacepage`/`updateframework`
 with later values. Verify the actual conflicting action rather than promising
-that every earlier manifest's value survives. `postlcp` Target delivery is
+that every earlier manifest's value survives. Fragment swaps chain only
+forward: while consolidating, a later-sorted swap whose selector equals an
+earlier swap's replacement path redirects that earlier entry to the later
+replacement (`/a→/b` then `/b→/c` renders `/c` for an `/a` link). The reverse
+order does not chain, because `fragment.js` looks up `mep.fragments` once by
+the link's authored path (or Lingo `originalHref`) and
+`handleFragmentCommand()` rewrites the href without another lookup.
+`postlcp` Target delivery is
 handled separately; the shared sort is not a guarantee that a late response
 can undo changes already applied.
 
@@ -116,7 +125,7 @@ a PZN manifest unless an analyst asks**; it's an analytics-only field.
   view (IntersectionObserver) — no DOM change.
 - **`updateframework`** swaps the Milo foundation stylesheet (value like `c1`,
   `c2`).
-- **Legacy normalization** (line ~820): the action is lowercased and the
+- **Legacy normalization** (`getVariantInfo`): the action is lowercased and the
   substrings `content`, `fragment`, and `tosection` are stripped. So
   `replaceContent`→`replace`, `replaceFragment`→`replace`,
   `removeContent`→`remove`, `insertContentBefore`→`insertbefore`,
@@ -138,11 +147,11 @@ rendering is a separate decoration step (`utils.js` auto-block routing and
 - **Fragment selector** (starts with `/` or `http`): matched against `<a>` hrefs;
   automatically gets modifiers `#_all` + `#_include-fragments` (so a fragment
   swap hits **every** matching link, across fragments, by default).
-- **Fragment URL domains are ignored** (`normalizePath`, lines ~145-161): for a
+- **Fragment URL domains are ignored** (`normalizePath`): for a
   known adobecom origin (`.hlx.`/`.aem.`/`.adobe.`/localhost/codeRoot) it returns
   just the pathname (localized unless en-US, `.json`, a locale-prefixed path, or
-  `#_dnt`). This applies to fragment **selectors** (line 670) and fragment
-  **values** alike (lines 850/870, `normalizeFragPaths` line 1289). Consequence:
+  `#_dnt`). This applies to fragment **selectors** (`getSelectedElements`) and fragment
+  **values** alike (`getVariantInfo`, `normalizeFragPaths`). Consequence:
   `hlx.page`/`aem.page`/`aem.live` and the repo host (`dc` vs `da-dc`) don't
   affect what serves — the path is fetched against the current page's origin, so
   a preview-looking URL in a published manifest serves the published fragment.
@@ -199,6 +208,8 @@ Beyond `manifest-type` / `manifest-execution-order` / `manifest-override-name`:
     otherwise Default is forced.
   - Missing key defaults to `personalized offer`, except promo-sourced
     manifests, which default to `promo or no offer changes`.
+  - With **no info tab at all**, consent is `personalized offer` regardless of
+    source (including promo), and ordering is `"1-1"` (`Normal` / `Promo`).
 - **Legacy `manifest-marketing-action` aliases:** `core services`,
   `core services/non-marketing`, and `non-marketing` map to
   `promo or no offer changes`; `marketing decrease` and `marketing increase`

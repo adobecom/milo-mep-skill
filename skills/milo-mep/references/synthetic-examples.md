@@ -29,11 +29,17 @@ that consent classification to a personalized offer without reviewing it.
 There is deliberately no desktop or `all` column: nonmatching users keep the
 original page. `phone` requires mobile-device detection **and** a screen width
 or height below 550; narrowing a desktop browser viewport alone is not enough.
-See `personalization-tags.md`. Confirm `any-marquee` uniquely selects the intended plain-HTML
-block. Attach the resolvable manifest path in page `personalization` metadata.
+See `personalization-tags.md`. Confirm `any-marquee` matches exactly the
+intended plain-HTML block. Add the resolvable manifest path to the page's
+`personalization` metadata, **appending** it if the metadata already lists
+other manifests; do not replace them.
 
-**Verify:** use `?mep`, confirm phone qualification after reload, and enable
-Highlight Changes. Verify desktop keeps its original hero.
+**Verify:** on `/example/smart-tools?mep` from a phone (or a mobile-device
+emulation below 550px), select the `phone` experience and enable Highlight
+Changes. Expected: the hero shows the `phone-hero` fragment content (its
+`data-path` is `/example-shared/fragments/smart-tools/phone-hero`). On desktop,
+expected: the original hero, unchanged. If the page has other manifests,
+confirm their changes still apply on both devices.
 
 ## 2. Target Promo versus native Personalization
 
