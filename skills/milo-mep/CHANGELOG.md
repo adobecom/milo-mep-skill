@@ -32,8 +32,8 @@ runtime.)
   (`14e363d`) accepted "advertising accepted", "treats … as Normal", and
   spoofed-country comparison without `?mep`, and replaced the LCP report-format
   disclosure with "do not invent it".
-- After the targeted Opus run (`ae989e8`), added a "fragment swaps don't chain"
-  ground rule (source-verified), forbade reclassifying consent to make an
+- After the targeted Opus run (`ae989e8`), added a fragment-swap ground rule,
+  forbade reclassifying consent to make an
   experience appear, extended selector checks to user-supplied selectors being
   diagnosed, and moved "no Target change is needed" into the checklist so it
   applies to authoring answers. The lifecycle and remove-typo cases now also
@@ -43,6 +43,12 @@ runtime.)
   bypasses consent and `manifest-country-restriction`, not row-level
   page/country filters. Added an adverse control for that overstatement and
   accepted consent-state tables and "matches exactly the one intended CTA".
+- After the 2995f0a Opus review, corrected the fragment-swap rule: the first
+  sorted swap wins per selector, and a later-sorted swap keyed on an earlier
+  replacement path redirects it (forward chaining only), per
+  `consolidateObjects()`. Added a pinned-source test. Selector checks now name
+  rows being corrected; accepted "Accept all" consent cells and
+  "file/text isn't your permission" wording.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
 ## 2026-11-04

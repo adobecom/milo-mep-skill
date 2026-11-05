@@ -316,3 +316,20 @@ test("pinned commands complete on the first match; include-fragments widens scop
   assert.equal(all.length, 1);
   assert.deepEqual(run.applied, ["fragment-a-1", "fragment-a-2", "fragment-b-1"]);
 });
+
+test("pinned fragment swaps keep the first selector and chain only forward in sorted order", () => {
+  const consolidateObjects = new Function(
+    `${section("const consolidateObjects =", "export const matchGlob =")}; return consolidateObjects;`,
+  )();
+  const manifest = (manifestPath, selector, val) => ({ manifestPath, fragments: [{ action: "replace", selector, val }] });
+
+  const forward = consolidateObjects([manifest("m1", "/a", "/b"), manifest("m2", "/b", "/c")], "fragments");
+  assert.equal(forward["/a"].fragment, "/c");
+  assert.equal(forward["/a"].manifestPath, "m2");
+
+  const reverse = consolidateObjects([manifest("m1", "/b", "/c"), manifest("m2", "/a", "/b")], "fragments");
+  assert.equal(reverse["/a"].fragment, "/b");
+
+  const sameSelector = consolidateObjects([manifest("m1", "/a", "/b"), manifest("m2", "/a", "/x")], "fragments");
+  assert.equal(sameSelector["/a"].fragment, "/b");
+});

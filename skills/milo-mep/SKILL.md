@@ -125,9 +125,9 @@ these for every response:
 
 ### Answer checklist (apply whichever items fit)
 
-- **Selectors.** For every element selector you propose or diagnose
-  (user-supplied, illustrative, or a nested-fragment fix): state that it matches
-  authored/plain HTML, and tell the author to
+- **Selectors.** For every element selector in a row you propose, correct, or
+  diagnose (user-supplied, illustrative, or a nested-fragment fix): state that
+  it matches authored/plain HTML, and tell the author to
   confirm it matches exactly the one intended element in the content that
   actually loads, including any replacement fragment. Do not imply an example
   is already verified. Without `#_all`, a command completes on its first match;
@@ -256,9 +256,11 @@ answer checklist above.
   Prefer simplified selectors (`any-marquee primary-cta`) over brittle chains.
 - **MEP targets the first match by default**; add `#_all` to hit every match
   only when every match is intended. Otherwise narrow the selector.
-- **Fragment swaps don't chain.** A swap is looked up once by the link's
-  authored path; a row whose selector is another row's replacement path never
-  applies to that link. For one selector, the first sorted manifest's swap wins.
+- **Fragment swaps resolve once, in sorted order.** For one selector, the
+  first sorted swap wins. If a later-sorted swap's selector equals an earlier
+  swap's replacement path, Milo redirects the earlier link to the later
+  replacement; the reverse order does not chain. Links are not looked up again
+  at load.
 - **Experience-column order is priority**; a user gets the first column they
   match for the entire manifest, not independently per row. Blank cells do
   **not** inherit actions from `all` or another experience, so a new column
