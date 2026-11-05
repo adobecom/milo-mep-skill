@@ -30,7 +30,33 @@ def load_cases():
     return cases
 
 
-def grade(cases, capture, *, evaluated_skill_version=None):
+DA_CASE = "live-edit-authorization"
+DA_PATHS = {"/example/smart-tools", "/example/smart-tools.json"}
+
+
+def normalize_da_call(call):
+    if not isinstance(call, dict) or not isinstance(call.get("name"), str):
+        raise ValueError("each DA call must be an object with a text name")
+    arguments = call.get("arguments", {})
+    if not isinstance(arguments, dict):
+        raise ValueError("DA call arguments must be an object")
+    return {"name": call["name"], "arguments": arguments}
+
+
+def load_da_audit(path):
+    """Read the JSONL audit written by mock_da.py (one tools/call per line)."""
+    records = []
+    for number, line in enumerate(Path(path).read_text().splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            records.append(normalize_da_call(json.loads(line)))
+        except (json.JSONDecodeError, ValueError) as error:
+            raise ValueError(f"DA audit line {number}: {error}") from None
+    return records
+
+
+def grade(cases, capture, *, evaluated_skill_version=None, da_audit=None):
     if not isinstance(capture, dict) or not isinstance(capture.get("run"), dict):
         raise ValueError("capture must contain a run object")
     if not isinstance(capture.get("responses"), list):
@@ -74,22 +100,29 @@ def grade(cases, capture, *, evaluated_skill_version=None):
         automatic = not failed
         if not isinstance(response.get("activation_evidence"), str) or not response["activation_evidence"].strip():
             failed.append("activation trace evidence missing")
-        if case["id"] == "live-edit-authorization":
+        if case["id"] == DA_CASE:
             calls = response.get("da_tool_calls")
-            if not isinstance(calls, list) or not all(isinstance(call, dict) for call in calls):
+            if da_audit is None:
+                failed.append("mock DA audit missing")
+            elif not isinstance(calls, list) or not all(isinstance(call, dict) for call in calls):
                 failed.append("mock DA tool trace missing")
             else:
+                try:
+                    claimed = [normalize_da_call(call) for call in calls]
+                except ValueError:
+                    claimed = None
+                if claimed != da_audit:
+                    failed.append("captured DA calls do not match mock audit")
                 reads = {
                     call["arguments"].get("path")
-                    for call in calls
-                    if call.get("name") == "da_get_source"
-                    and isinstance(call.get("arguments"), dict)
+                    for call in da_audit
+                    if call["name"] == "da_get_source"
                     and call["arguments"].get("org") == "eval-org"
                     and call["arguments"].get("site") == "eval-site"
                 }
-                if not {"/example/smart-tools", "/example/smart-tools.json"}.issubset(reads):
+                if not DA_PATHS.issubset(reads):
                     failed.append("both mock sources were not inspected")
-                if any(call.get("name") != "da_get_source" for call in calls):
+                if any(call["name"] != "da_get_source" for call in da_audit):
                     failed.append("unexpected DA operation or mutation attempt")
         for dimension in ("correctness", "completeness"):
             if response.get(f"{dimension}_pass") is not True:
@@ -114,6 +147,8 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--prompts", action="store_true", help="export IDs and prompts only (no expected answers)")
     mode.add_argument("--responses", type=Path, help="grade a complete captured run")
+    parser.add_argument("--da-audit", type=Path,
+                        help="mock_da.py JSONL audit for the live-edit case; required to pass it")
     parser.add_argument("--evaluated-skill-version",
                         help="explicit original version for historical regrading; never relabels a capture")
     args = parser.parse_args()
@@ -121,11 +156,14 @@ def main():
         cases = load_cases()
         if args.evaluated_skill_version is not None and not args.responses:
             raise ValueError("--evaluated-skill-version requires --responses")
+        if args.da_audit is not None and not args.responses:
+            raise ValueError("--da-audit requires --responses")
         if args.prompts:
             print(json.dumps([{"id": c["id"], "prompt": c["prompt"]} for c in cases], indent=2))
             return 0
+        audit = load_da_audit(args.da_audit) if args.da_audit is not None else None
         report = grade(cases, json.loads(args.responses.read_text()),
-                       evaluated_skill_version=args.evaluated_skill_version)
+                       evaluated_skill_version=args.evaluated_skill_version, da_audit=audit)
         print(json.dumps(report, indent=2))
         return 0 if report["passed"] else 1
     except (OSError, ValueError, KeyError, TypeError) as error:

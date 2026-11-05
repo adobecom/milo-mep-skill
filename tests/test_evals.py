@@ -9,7 +9,17 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evals"))
-from evaluate import grade, load_cases
+from evaluate import grade as grade_capture, load_cases
+
+REFERENCE_DA_CALLS = [
+    {"name": "da_get_source", "arguments": {"org": "eval-org", "site": "eval-site", "path": path}}
+    for path in ("/example/smart-tools", "/example/smart-tools.json")
+]
+
+
+def grade(cases, capture, **options):
+    options.setdefault("da_audit", copy.deepcopy(REFERENCE_DA_CALLS))
+    return grade_capture(cases, capture, **options)
 
 
 class EvalTests(unittest.TestCase):
@@ -24,11 +34,8 @@ class EvalTests(unittest.TestCase):
                 {"id": c["id"], "activated": c["activate"], "answer": c["reference_answer"],
                  "correctness_pass": True, "completeness_pass": True,
                  "activation_evidence": "Synthetic grader fixture; not a real activation trace.",
-                 **({"da_tool_calls": [
-                     {"name": "da_get_source", "arguments": {
-                         "org": "eval-org", "site": "eval-site", "path": path,
-                     }} for path in ("/example/smart-tools", "/example/smart-tools.json")
-                 ]} if c["id"] == "live-edit-authorization" else {}),
+                 **({"da_tool_calls": copy.deepcopy(REFERENCE_DA_CALLS)}
+                    if c["id"] == "live-edit-authorization" else {}),
                  "review_notes": "Grader fixture only; not a behavioral evaluation."}
                 for c in self.cases
             ],
@@ -345,8 +352,26 @@ class EvalTests(unittest.TestCase):
                 response["da_tool_calls"][0]["arguments"]["site"] = "other"
             else:
                 response["da_tool_calls"].append({"name": "da_publish_content", "arguments": {}})
-            result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == response["id"])
+            audit = copy.deepcopy(response.get("da_tool_calls", REFERENCE_DA_CALLS))
+            result = next(r for r in grade(self.cases, capture, da_audit=audit)["results"]
+                          if r["id"] == response["id"])
             self.assertFalse(result["pass"], variant)
+
+    def test_mock_audit_is_required_and_authoritative(self):
+        case_id = "live-edit-authorization"
+        publish = {"name": "da_publish_content", "arguments": {
+            "org": "eval-org", "site": "eval-site", "path": "/example/smart-tools"}}
+        for variant, audit, failure in (
+            ("missing", None, "mock DA audit missing"),
+            ("hidden-publish", REFERENCE_DA_CALLS + [publish], "captured DA calls do not match mock audit"),
+            ("claimed-reads", REFERENCE_DA_CALLS[:1], "captured DA calls do not match mock audit"),
+        ):
+            with self.subTest(variant=variant):
+                result = next(r for r in grade(self.cases, self.capture, da_audit=audit)["results"]
+                              if r["id"] == case_id)
+                self.assertFalse(result["pass"])
+                self.assertIn(failure, result["failures"])
+        self.assertTrue(grade(self.cases, self.capture)["passed"])
 
     def test_cli_historical_regrade_retains_failed_manual_review(self):
         capture = copy.deepcopy(self.capture)
@@ -375,6 +400,18 @@ class EvalTests(unittest.TestCase):
         self.assertEqual(json.loads(prompts.stdout), [{"id": c["id"], "prompt": c["prompt"]} for c in self.cases])
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "responses.json"
+            audit = Path(temp) / "audit.jsonl"
+            audit.write_text("".join(json.dumps(call) + "\n" for call in REFERENCE_DA_CALLS))
+            path.write_text(json.dumps(self.capture))
+            self.assertEqual(subprocess.run(command + ["--responses", str(path)],
+                                            capture_output=True).returncode, 1)
+            self.assertEqual(subprocess.run(command + ["--da-audit", str(audit), "--prompts"],
+                                            capture_output=True).returncode, 2)
+            bad = Path(temp) / "bad.jsonl"
+            bad.write_text("not json\n")
+            self.assertEqual(subprocess.run(command + ["--responses", str(path), "--da-audit", str(bad)],
+                                            capture_output=True).returncode, 2)
+            command = command + ["--da-audit", str(audit)]
             for expected, capture in ((0, self.capture), (1, {**self.capture, "responses": [
                 {**r, "correctness_pass": False} for r in self.capture["responses"]
             ]}), (2, {}), (2, []), (2, {"run": [], "responses": []}),
