@@ -222,3 +222,97 @@ test("pinned runtime updates an existing external Studio href without changing l
   assert.equal(attributes.get("href"), url);
   assert.equal(el.textContent, "Existing link");
 });
+
+test("pinned manifest priority sorts by execution order, then type, then incoming order", async () => {
+  const getManifestConfig = new Function(
+    "normalizePath", "createDefaultExperiment", "fetchData", "DATA_TYPE", "recordManifestError",
+    "parseManifestVariants", "log", "getFileName", "TRACKED_MANIFEST_TYPE", "normalizeConsentType",
+    "PERSONALIZED_OFFER", "setCountryEnabled", "setConsentEnabled", "PROMO_OR_NO_OFFER_CHANGES",
+    "sendAnalytics", "getPersonalizationVariant",
+    `${section("async function getManifestConfig(", "const normalizeFragPaths =")}; return getManifestConfig;`,
+  )(
+    (path) => path, () => null, async () => null, {}, () => {},
+    () => ({ variantNames: ["all"], variants: { all: { commands: [], fragments: [] } } }),
+    () => {}, (path) => path.split("/").pop(), "test or promo", (value) => value,
+    "personalized offer", () => {}, () => {}, "promo or no offer changes",
+    () => {}, async () => "all",
+  );
+  const load = (manifestPath, info) => getManifestConfig({
+    manifestPath,
+    manifestData: { experiences: { data: [] } },
+    manifestInfo: info && Object.entries(info).map(([key, value]) => ({ key, value })),
+  });
+  const order = "manifest-execution-order";
+  const type = "manifest-type";
+  const incoming = [
+    await load("/m/last-pers.json", { [order]: "Last", [type]: "Personalization" }),
+    await load("/m/normal-promo.json", { [order]: "Normal", [type]: "Promo" }),
+    await load("/m/normal-test.json", { [order]: "Normal", [type]: "Test" }),
+    await load("/m/wrong-case.json", { [order]: "first", [type]: "personalization" }),
+    await load("/m/first-test.json", { [order]: "First", [type]: "Test" }),
+    await load("/m/normal-pers.json", { [order]: "Normal", [type]: "Personalization" }),
+    await load("/m/no-info.json"),
+  ];
+  // Unknown or wrong-case values fall back to Normal/Promo, the same as no info tab.
+  assert.deepEqual(incoming.map(({ executionOrder }) => executionOrder),
+    ["2-0", "1-1", "1-2", "1-1", "0-2", "1-0", "1-1"]);
+
+  const cleanAndSort = new Function("normalizePath", "getConfig", "parsePlaceholders", "log", "window",
+    `${section("function compareExecutionOrder(", "export function handleFragmentCommand(")}; return cleanAndSortManifestList;`,
+  )((path) => path, () => ({ mep: {} }), () => {}, () => {}, {});
+  assert.deepEqual(cleanAndSort(incoming, { mep: {} }).map(({ manifestPath }) => manifestPath), [
+    "/m/first-test.json",
+    "/m/normal-pers.json",
+    "/m/normal-promo.json",
+    "/m/wrong-case.json",
+    "/m/no-info.json",
+    "/m/normal-test.json",
+    "/m/last-pers.json",
+  ]);
+});
+
+test("pinned commands complete on the first match; include-fragments widens scope, not uniqueness", async () => {
+  const root = (name, count) => {
+    const els = Array.from({ length: count }, (_, index) => ({ id: `${name}-${index + 1}` }));
+    return { querySelector: () => null, querySelectorAll: () => els, contains: (el) => els.includes(el) };
+  };
+  const runner = (page) => {
+    const applied = [];
+    const getSelectedElements = new Function(
+      "document", "getSelectorType", "SELECTOR_TYPES", "normalizePath", "modifyNonFragmentSelector", "FLAGS", "log",
+      `${section("function getSelectedElements(", "const addHash =")}; return getSelectedElements;`,
+    )(page, () => "css", { fragment: "fragment", twpButtons: "twp-buttons" }, (path) => path,
+      modifySelector, { all: "all", includeFragments: "include-fragments" }, () => {});
+    const handleCommands = new Function(
+      "document", "addSectionAnchors", "getSelectorType", "SELECTOR_TYPES", "INLINE_HASH", "addHash",
+      "IN_BLOCK_SELECTOR_PREFIX", "registerInBlockActions", "getSelectedElements", "COMMANDS", "CREATE_CMDS",
+      "isPostLCP", "createContent", "FLAGS", "deleteMarkedEls",
+      `${section("export async function handleCommands(", "const getCountryList =")}; return handleCommands;`,
+    )(page, () => {}, () => "css", { fragment: "fragment" }, "_inline", (url) => url,
+      "in-block:", () => {}, getSelectedElements, { updateattribute: (el) => applied.push(el.id) }, {},
+      false, async () => null, { all: "all", includeFragments: "include-fragments" }, () => {});
+    return { applied, handleCommands };
+  };
+  const command = (selector) => [{ action: "updateattribute", selector, content: "/example/new" }];
+
+  let run = runner(root("page", 2));
+  assert.deepEqual(await run.handleCommands(command("a.cta href")), []);
+  assert.deepEqual(run.applied, ["page-1"]);
+
+  run = runner(root("page", 2));
+  assert.deepEqual(await run.handleCommands(command("a.cta href #_all")), []);
+  assert.deepEqual(run.applied, ["page-1", "page-2"]);
+
+  run = runner(root("page", 0));
+  const pending = await run.handleCommands(command("a.cta href #_include-fragments"));
+  assert.equal(pending.length, 1);
+  assert.deepEqual(await run.handleCommands(pending, root("fragment-a", 2), false, true), []);
+  assert.deepEqual(run.applied, ["fragment-a-1"]);
+
+  run = runner(root("page", 0));
+  let all = await run.handleCommands(command("a.cta href #_include-fragments #_all"));
+  all = await run.handleCommands(all, root("fragment-a", 2), false, true);
+  all = await run.handleCommands(all, root("fragment-b", 1), false, true);
+  assert.equal(all.length, 1);
+  assert.deepEqual(run.applied, ["fragment-a-1", "fragment-a-2", "fragment-b-1"]);
+});
