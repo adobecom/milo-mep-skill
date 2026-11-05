@@ -67,6 +67,8 @@ Manifests are sorted by `executionOrder`, a string `"<execOrderIdx>-<typeIdx>"`:
 - `manifest-execution-order`: `First`=0, `Normal`=1, `Last`=2 (primary sort key).
 - `manifest-type`: `Personalization`=0, `Promo`=1, `Test`=2 (secondary).
 - Missing info → default `"1-1"`.
+- Values match **case-sensitively** (`indexOf`); an unrecognized value such as
+  `first` or `personalization` falls back to index 1 (`Normal` / `Promo`).
 
 This is **one shared sort for MEP-native and Target-delivered manifests**:
 `init()` combines metadata and Target sources, and `applyPers()` parses their
@@ -199,6 +201,8 @@ Beyond `manifest-type` / `manifest-execution-order` / `manifest-override-name`:
     otherwise Default is forced.
   - Missing key defaults to `personalized offer`, except promo-sourced
     manifests, which default to `promo or no offer changes`.
+  - With **no info tab at all**, consent is `personalized offer` regardless of
+    source (including promo), and ordering is `"1-1"` (`Normal` / `Promo`).
 - **Legacy `manifest-marketing-action` aliases:** `core services`,
   `core services/non-marketing`, and `non-marketing` map to
   `promo or no offer changes`; `marketing decrease` and `marketing increase`

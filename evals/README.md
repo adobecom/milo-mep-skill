@@ -1,15 +1,16 @@
 # Skill behavioral evaluations
 
-The 21 cases in `cases.json` cover activation (including implicit MEP requests and negative
+The 28 cases in `cases.json` cover activation (including implicit MEP requests and negative
 examples), priority, consent defaults, localization, selectors, experience
 order, trusted fragment hosts, live-edit authorization, page-scoped
-placeholders, forced-preview carry-over, class-attribute replacement, and
-existing M@S Studio href updates. All examples are
+placeholders, forced-preview carry-over, class-attribute replacement,
+existing M@S Studio href updates, forced-preview gating, info-value casing,
+missing info sheets, `remove` cell typos, the LCP image check, and row-level
+country filters. All examples are
 synthetic. Evidence paths and manual rubrics accompany each case.
 
-The lifecycle-conflict case marked `split: "holdout"` is reserved as a transfer
-probe: its specific scenario is not added as a worked example in the installed
-skill. Keep it out of answering-agent context along with the other rubrics and
+Cases marked `split: "holdout"` are reserved as transfer probes: their
+specific scenarios are not added as worked examples in the installed skill. Keep it out of answering-agent context along with the other rubrics and
 reference answers. This label is not a claim that the underlying mechanism is
 absent from the existing reference material.
 

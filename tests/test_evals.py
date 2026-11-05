@@ -357,6 +357,23 @@ class EvalTests(unittest.TestCase):
                           if r["id"] == response["id"])
             self.assertFalse(result["pass"], variant)
 
+    def test_heldout_cases_reject_plausible_wrong_answers(self):
+        wrong = {
+            "heldout-forced-preview-gates": "Yes, MEP is broken: the preview proves real visitors qualify.",
+            "heldout-execution-order-case": "Values are case-insensitive, so first counts as First. Target has priority.",
+            "heldout-missing-info-consent": "Promo metadata bypasses consent, so remove the promo metadata and re-add it.",
+            "heldout-remove-typo": "flase is treated as false, so a blank cell also removes; check ?mep.",
+            "heldout-lcp-check": "meplcp improves LCP in preview only and does not affect production visitors; "
+                                 "it checks image size before personalization in the first section.",
+            "heldout-row-country-filter": "Yes. manifest-country-restriction applies to one row; set jp, spoof with ?mep.",
+        }
+        for case_id, answer in wrong.items():
+            with self.subTest(case=case_id):
+                capture = copy.deepcopy(self.capture)
+                next(r for r in capture["responses"] if r["id"] == case_id)["answer"] = answer
+                result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == case_id)
+                self.assertFalse(result["automatic_pass"])
+
     def test_mock_audit_is_required_and_authoritative(self):
         case_id = "live-edit-authorization"
         publish = {"name": "da_publish_content", "arguments": {

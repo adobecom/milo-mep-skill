@@ -120,6 +120,15 @@ The reverse direction is `parseMepParam()` in `personalization.js`: it splits
 `config.mep.variantOverride`, which `getPersonalizationVariant` honors before any
 audience matching — that's how a forced experience wins.
 
+A forced variant also wins over manifest-level gates. Consent gating and
+`manifest-country-restriction` force Default only through `overrideVariant`,
+which never replaces an existing override, and a forced manifest loads even
+when disabled. So a `?mep` preview can show an experience that
+consent-declined or out-of-country visitors will not receive. To QA those
+gates, load the page **without** a forced variant for that manifest, with the
+intended consent state and spoofed country. Row-level page/country filters
+still apply to forced variants.
+
 ### A manifest appears on the wrong page after previewing
 
 **Check the URL before changing production targeting.** A nonempty

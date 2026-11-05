@@ -3,16 +3,39 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
+## 2026-11-05
+
+**Skill release 1.1.9 — consolidated answer checklist and refreshed source (candidate)**
+- Refreshed the bundled Milo snapshot to `main` at `3960bb8`. Documented the
+  preview-only `meplcp` LCP Img Check and the in-block M@S `pzn` replacement
+  parameter; replaced stale source line citations with function names.
+- Documented source behavior: a forced `?mep` variant wins over consent and
+  country-restriction Default; info values are case-sensitive and unknown
+  values sort as Normal/Promo; a manifest with no info tab uses
+  `personalized offer` consent regardless of source.
+- Consolidated duplicated `SKILL.md` selector, existing-manifest, verification,
+  and placeholder rules into one Answer checklist without dropping requirements.
+- Gave synthetic example 1 an observable phone/desktop result and
+  metadata-append guidance.
+- Added six held-out cases and one negative case (28 total), with adverse
+  controls. The live-edit case is now graded against the mock DA audit
+  (`--da-audit`) instead of trusting captured tool calls.
+- Added pinned-source tests for manifest priority sorting and first-match
+  command completion.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
 ## 2026-11-04
 
-**Skill release 1.1.8 — explicit selector verification (candidate)**
+**Skill release 1.1.8 — explicit selector verification (validated)**
 - Required uniqueness checks for illustrative and nested-fragment selectors,
   including first-match completion and observable Highlight Changes QA.
 - Accepted equivalent no-edit, blank-filter-last, and unchanged-token wording
   in evaluation screens without relaxing manual or DA trace gates.
-- Fresh cross-model behavioral evaluation remains required before distribution.
+- Validated with fresh runs of all 21 cases on GPT-6.1 Sol and Claude Opus 5.5
+  (Copilot CLI 1.0.105, medium effort): 21/21 on activation, automatic,
+  correctness, and completeness under grader `33b7094`.
 
-**Skill release 1.1.7 — safe authoring alternatives and complete priority (candidate)**
+**Skill release 1.1.7 — safe authoring alternatives and complete priority (unreleased candidate, superseded)**
 - Required inspection and preserved audience actions before offering an
   existing-manifest edit; removed the unsafe one-row fallback for unseen files.
 - Required the stable equal-setting tiebreaker in priority explanations.
@@ -20,12 +43,12 @@ runtime.)
   grading, with adverse controls; no safety/manual gates were waived.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
-**Skill release 1.1.6 — additive-change verification (candidate)**
+**Skill release 1.1.6 — additive-change verification (unreleased candidate, superseded)**
 - Made conflict inspection and preservation QA explicit in the response
   checklist when proposing an additional manifest, not just in ground rules.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
-**Skill release 1.1.5 — preserve existing audience actions (candidate)**
+**Skill release 1.1.5 — preserve existing audience actions (unreleased candidate, superseded)**
 - Clarified that experience selection is manifest-wide and blank cells never
   inherit another experience's actions.
 - When adding an audience, preserve applicable existing actions or propose an
@@ -34,7 +57,7 @@ runtime.)
   unrelated rows in an existing manifest.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
-**Skill release 1.1.4 — prediction scope and verification (candidate)**
+**Skill release 1.1.4 — prediction scope and verification (unreleased candidate, superseded)**
 - Made stored value, MEP substitution, and unverified final page rendering
   distinct in the entry point, including when reading runtime source directly.
 - Required page/experience-specific QA for prediction-only answers and each
@@ -43,7 +66,7 @@ runtime.)
   point, backed by pinned-source boundary regressions.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
-**Skill release 1.1.3 — placeholder rendering correction (candidate)**
+**Skill release 1.1.3 — placeholder rendering correction (unreleased candidate, superseded)**
 - Corrected empty placeholder guidance: the selected value is stored empty,
   but MEP's truthy-only replacement leaves the literal token unchanged.
   Other page placeholder pipelines require separate verification.
@@ -55,7 +78,7 @@ runtime.)
   Regrading 1.1.2 answers is not a behavioral evaluation of this candidate;
   fresh cross-model evaluation remains required before distribution.
 
-**Skill release 1.1.2 — evaluation-driven precision (candidate)**
+**Skill release 1.1.2 — evaluation-driven precision (unreleased candidate, superseded)**
 - Added reversed-column placeholder counterexamples and an explicit warning
   that the lookup list does not define value-column precedence.
 - Reinforced replacement-URL `#_dnt` placement, preview filter boundaries,

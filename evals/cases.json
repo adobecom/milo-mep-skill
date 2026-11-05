@@ -173,6 +173,72 @@
       "reference_answer": "Use updateAttribute | any-marquee class | marquee small dark in the intended experience column, after confirming the selector is unique. The final attribute token is class, not [class]. This replaces the entire class value, so preserve the block name and required size variants. Match plain pre-decoration HTML, not a generated card component; its theme needs block-supported behavior. Verify the resulting classes and appearance with ?mep and Highlight Changes."
     },
     {
+      "id": "heldout-forced-preview-gates",
+      "split": "holdout",
+      "prompt": "Our MEP manifest for /de/creativecloud.html has manifest-consent-type `personalized offer` and manifest-country-restriction `de`. When I preview with ?mep=/de/cc-shared/manifests/cc-loyalty.json--loyal the swapped banner shows. A German tester who rejected advertising cookies sees the original banner. Is MEP broken?",
+      "activate": true,
+      "checks": ["(?:not (?:a )?(?:bug|broken)|expected|working as (?:designed|intended)|by design)", "advertising", "(?:forc|\\?mep|preview)[^\\n]{0,160}(?:bypass|overrid|skip|ignor|wins|precedence|not (?:subject|gated))|(?:bypass|overrid|skip|ignor)[^\\n]{0,160}(?:consent|gat|restriction)", "(?:without|remove|drop|no)[^\\n]{0,60}(?:\\?mep|forced|mep=|override)", "(?:accept|grant|allow|opt.?in)[^\\n]{0,80}(?:cookie|consent|advertising)|(?:cookie|consent)[^\\n]{0,60}(?:accept|grant|allow)"],
+      "reject": ["MEP is (?:broken|buggy)", "preview (?:proves|confirms|guarantees)"],
+      "review": ["personalized offer requires performance and advertising consent; otherwise Default is forced, so the tester's result is expected.", "A forced ?mep variant is set before consent/country gating and is not replaced by their Default, so preview success does not prove eligibility.", "Verify without a forced variant for that manifest, with consent accepted and Germany spoofed, naming the expected banner; do not reclassify consent to make it appear."],
+      "evidence": ["skills/milo-mep/references/mep-button.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "Not a bug. A personalized offer needs both performance and advertising consent; without it Milo forces Default, so the tester correctly sees the original banner. Your ?mep preview forced the variant, and a forced variant overrides the consent and country gates. Verify without the forced mep= override: accept all cookies, spoof de, and confirm the loyalty banner replaces the original."
+    },
+    {
+      "id": "heldout-execution-order-case",
+      "split": "holdout",
+      "prompt": "Our loyalty manifest's helix-info says manifest-execution-order = first and manifest-type = personalization. A second manifest on the page is Normal / Promo and is listed earlier in the personalization metadata. Both replace the same marquee, and the Promo manifest's change wins. Why?",
+      "activate": true,
+      "checks": ["(?:case.?sensitiv|exact (?:case|capitali[sz]ation|spelling|values?)|capitali[sz]|lower.?case|upper.?case)", "(?:fall(?:s)? back|default|treated as|counts? as|read as|sorts? as|becomes?)[^\\n]{0,80}Normal", "(?:tie|equal|same (?:order|priority|rank|key|position|sort))", "(?:metadata|list|listed|incoming|input)[^\\n]{0,40}(?:order|earlier|first)|(?:earlier|first)[^\\n]{0,40}(?:metadata|in the list|listed)", "(?:Highlight Changes|\\?mep)"],
+      "reject": ["(?:values|they) are case.?insensitive", "Target (?:always )?(?:wins|has (?:higher )?priority)"],
+      "review": ["Values are matched case-sensitively; lowercase first/personalization fall back to Normal/Promo.", "Both manifests then tie at Normal/Promo, so stable incoming (metadata) order keeps the earlier Promo manifest first.", "Fix with exact First and Personalization in helix-info and verify the loyalty marquee in ?mep with Highlight Changes."],
+      "evidence": ["skills/milo-mep/references/source-notes.md", "skills/milo-mep/references/manifest-schema.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "The values are case-sensitive. first and personalization are not recognized, so the loyalty manifest falls back to Normal / Promo. Both manifests now tie, and the stable sort keeps metadata order, so the earlier-listed Promo manifest runs first. Set manifest-execution-order to First and manifest-type to Personalization exactly. Verify with ?mep and Highlight Changes that the marquee shows the loyalty content."
+    },
+    {
+      "id": "heldout-missing-info-consent",
+      "split": "holdout",
+      "prompt": "We attached a Black Friday promo manifest through the page's promo metadata. The workbook only has helix-experiences, with no helix-info sheet. Visitors who accept all cookies see the promo, but visitors who decline advertising cookies don't. The promo does not change any offers. Why, and what should we fix?",
+      "activate": true,
+      "checks": ["(?:no|missing|without (?:a |the )?|lacks? (?:a |the )?)\\s*(?:helix-)?info", "personalized offer", "advertising", "promo or no offer changes", "(?:declin|reject|deny|without)[^\\n]{0,60}(?:advertising|cookie|consent)"],
+      "reject": ["(?:remove|delete) the promo metadata"],
+      "review": ["With no info tab, Milo uses personalized offer consent regardless of the promo source, requiring performance and advertising consent.", "The promo-source default to promo or no offer changes applies only when an info tab exists without a consent key.", "Add helix-info from the template with manifest-type Promo and manifest-consent-type promo or no offer changes (only because no offers change), then verify with advertising consent declined and no forced variant."],
+      "evidence": ["skills/milo-mep/references/source-notes.md", "skills/milo-mep/references/manifest-schema.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "Without a helix-info sheet, Milo treats the manifest as a personalized offer, even when it comes from promo metadata, so it needs performance and advertising consent. The promo default only applies when an info sheet exists without a consent key. Add helix-info from the template with manifest-type Promo and manifest-consent-type promo or no offer changes, since no offers change. Verify by declining advertising cookies, loading the page without a forced ?mep variant, and confirming the promo appears."
+    },
+    {
+      "id": "heldout-remove-typo",
+      "split": "holdout",
+      "prompt": "In our manifest, the row `remove | .legal-disclaimer` has `flase` in the phone column and the all column is blank. Phone visitors lose the disclaimer, but we meant to keep it. What happened?",
+      "activate": true,
+      "checks": ["(?:typo|misspell|flase)", "(?:anything|any (?:other )?(?:non.?blank )?value|other than)[^\\n]{0,60}(?:false|remov)|(?:only|exact(?:ly)?)[^\\n]{0,30}(?:blank|false)", "(?:blank|empty)", "(?:Highlight Changes|\\?mep)"],
+      "reject": ["flase (?:is|counts as|means) (?:treated as )?false", "\\bblank (?:cells? )?(?:also )?removes?\\b"],
+      "review": ["remove skips only blank or exact false; any other value, including the typo flase, removes.", "Fix the phone cell to blank (or exactly false); the blank all cell already leaves other visitors unchanged.", "Verify phone in ?mep that .legal-disclaimer remains; state that the selector matches plain HTML and must match exactly the intended element."],
+      "evidence": ["skills/milo-mep/references/actions.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "flase is a typo. remove skips only a blank cell or exactly false; anything other than false removes the element. Leave the phone cell blank (or write false). The selector .legal-disclaimer matches plain HTML; confirm it matches exactly the one intended element. Verify with ?mep, phone selected, and Highlight Changes that the disclaimer is still on the page."
+    },
+    {
+      "id": "heldout-lcp-check",
+      "split": "holdout",
+      "prompt": "What does the LCP Img Check toggle in the MEP button do? If I leave it on, will production visitors be affected?",
+      "activate": true,
+      "checks": ["meplcp", "(?:preview|\\?mep)[^\\n]{0,80}(?:only|mode)|only[^\\n]{0,40}preview", "(?:first|initial|top|LCP) section|before[^\\n]{0,60}(?:manifest|personaliz|MEP)", "(?:not|no|won.t|doesn.t|does not)[^\\n]{0,60}(?:production|real|live|end) (?:visitors|users)|(?:production|real|live) (?:visitors|users)[^\\n]{0,60}(?:not|unaffected|won.t|aren.t)", "(?:compar|check)[^\\n]{0,60}(?:LCP|image)"],
+      "reject": ["(?:improves|speeds up|optimi[sz]es) (?:the )?LCP"],
+      "review": ["It adds a bare meplcp parameter and works only in preview mode.", "Milo clones the first section before manifests apply and lazily loads mep-lcp-check.js afterward to compare LCP images.", "It is a diagnostic: it does not change production visitors, and the report format is not in the bundled snapshot."],
+      "evidence": ["skills/milo-mep/references/mep-button.md", "skills/milo-mep/assets/source/utils.js", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "It adds meplcp to the preview URL. It works only in preview mode: Milo clones the first section before manifests apply, then loads a checker that compares the LCP image after personalization. It is a diagnostic and does not affect production visitors. The bundled source does not include the report format."
+    },
+    {
+      "id": "heldout-row-country-filter",
+      "split": "holdout",
+      "prompt": "One manifest has five rows for our /products/photoshop page. I want only the pricing-banner swap to apply in Japan; all other rows should still apply everywhere. Should I set manifest-country-restriction to jp?",
+      "activate": true,
+      "checks": ["\\bno\\b|don.t|do not|shouldn.t|should not|instead", "(?:whole|entire|all rows|every row|manifest.wide|all of the manifest)", "country filter", "\\bjp\\b", "akamaiLocale|spoof", "(?:Highlight Changes|\\?mep)"],
+      "reject": ["manifest-country-restriction (?:only )?(?:affects|applies to) (?:a single|one|that) row"],
+      "review": ["manifest-country-restriction restricts the whole manifest; outside visitors get Default for every row.", "Use the row-level country filter (or country filter optional) column with jp on the pricing-banner row.", "Verify with the region spoofer (akamaiLocale=jp) and another country: the banner swaps only in Japan while other rows still apply; confirm the selector is unique in plain HTML."],
+      "evidence": ["skills/milo-mep/references/manifest-schema.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js"],
+      "reference_answer": "No. manifest-country-restriction applies to the whole manifest, so visitors outside Japan would get Default for every row. Instead, add a country filter column and put jp only on the pricing-banner row. Its selector matches plain HTML; confirm it matches exactly the intended banner. Verify with ?mep, the region spoofer (akamaiLocale=jp), and Highlight Changes: the banner swaps in Japan, and with another country it stays original while the other four rows still apply."
+    },
+    {
       "id": "negative-email-target",
       "prompt": "Design an Adobe Target A/B test for email subject lines in our CRM. This is not a Milo or adobe.com page.",
       "activate": false,
@@ -209,6 +275,16 @@
       "checks": [],
       "reject": [],
       "review": ["Publishing/CDN-only work must not activate MEP."],
+      "evidence": ["skills/milo-mep/SKILL.md"],
+      "reference_answer": ""
+    },
+    {
+      "id": "negative-target-outside-milo",
+      "prompt": "In the Adobe Target UI, how do I configure the primary goal metric for an A/B activity on an AEM Sites page that doesn't use Milo or EDS?",
+      "activate": false,
+      "checks": [],
+      "reject": [],
+      "review": ["Target configuration outside Milo must not activate MEP."],
       "evidence": ["skills/milo-mep/SKILL.md"],
       "reference_answer": ""
     }
