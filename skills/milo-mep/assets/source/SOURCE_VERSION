@@ -1,8 +1,8 @@
 milo source snapshot
 branch:      main
-commit:      5ac9112c211f4ce224082286c27a809379bd07b2
-committed:   2026-10-21T14:08:27Z
-snapshotted: 2026-10-22T18:21:22Z
+commit:      3960bb8452deb125d924ab4cbc3e544468dd0068
+committed:   2026-11-04T18:20:54Z
+snapshotted: 2026-11-05T14:55:20Z
 
 Bundled files under assets/source/ (flat names) map to milo repo paths via
 scripts/source-manifest.txt. Freshness is MANUAL: run

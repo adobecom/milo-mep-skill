@@ -116,7 +116,7 @@ a PZN manifest unless an analyst asks**; it's an analytics-only field.
   view (IntersectionObserver) — no DOM change.
 - **`updateframework`** swaps the Milo foundation stylesheet (value like `c1`,
   `c2`).
-- **Legacy normalization** (line ~820): the action is lowercased and the
+- **Legacy normalization** (`getVariantInfo`): the action is lowercased and the
   substrings `content`, `fragment`, and `tosection` are stripped. So
   `replaceContent`→`replace`, `replaceFragment`→`replace`,
   `removeContent`→`remove`, `insertContentBefore`→`insertbefore`,
@@ -138,11 +138,11 @@ rendering is a separate decoration step (`utils.js` auto-block routing and
 - **Fragment selector** (starts with `/` or `http`): matched against `<a>` hrefs;
   automatically gets modifiers `#_all` + `#_include-fragments` (so a fragment
   swap hits **every** matching link, across fragments, by default).
-- **Fragment URL domains are ignored** (`normalizePath`, lines ~145-161): for a
+- **Fragment URL domains are ignored** (`normalizePath`): for a
   known adobecom origin (`.hlx.`/`.aem.`/`.adobe.`/localhost/codeRoot) it returns
   just the pathname (localized unless en-US, `.json`, a locale-prefixed path, or
-  `#_dnt`). This applies to fragment **selectors** (line 670) and fragment
-  **values** alike (lines 850/870, `normalizeFragPaths` line 1289). Consequence:
+  `#_dnt`). This applies to fragment **selectors** (`getSelectedElements`) and fragment
+  **values** alike (`getVariantInfo`, `normalizeFragPaths`). Consequence:
   `hlx.page`/`aem.page`/`aem.live` and the repo host (`dc` vs `da-dc`) don't
   affect what serves — the path is fetched against the current page's origin, so
   a preview-looking URL in a published manifest serves the published fragment.

@@ -85,6 +85,13 @@ override by both the source fragment and field; the replacement MAS URL still
 provides the replacement fragment. This also supports lightweight inline MAS
 field links without hydrating a full merch card.
 
+The **replacement** MAS URL (the experience cell) may also carry
+`&pzn=<value>`. Milo copies it onto the command and preloads a separate
+`<aem-fragment fragment="<guid>" pzn="<value>">`, so the same replacement
+fragment can be preloaded with and without `pzn`. The bundled snapshot does
+not show how M@S interprets `pzn`; confirm its meaning with the M@S team
+before relying on it.
+
 ## Replacing specific cards in a `merch-card-collection`
 
 To swap individual cards inside a catalog/collection, target the collection block

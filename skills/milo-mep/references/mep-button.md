@@ -99,7 +99,15 @@ button (`.mep-footer a.con-button`) when controls change:
 | MAS highlight | `mepMasHighlight=true` | `data-mep-mas-highlight` |
 | Turn off preview button | `mepButton=off` | — |
 | Manifest Parameters | bare `mep` (no manifest values) | — |
+| LCP Img Check | bare `meplcp` | — |
 | Region/market spoofer | `akamaiLocale=<code>` and, for supported countries, `mboxOverride.browserIp=<ip>` (+ `mepMasMarket=true`) | — |
+
+**LCP Img Check (`meplcp`)** works only when preview mode is active. Before
+manifests apply, Milo clones the first section (`body > main > div`) and keeps
+a copy of the loaded experiments. After personalization it lazy-loads
+`mep-lcp-check.js` to compare LCP images. That module is not in the bundled
+snapshot, so do not describe its report format; treat it as a preview
+diagnostic, not a production behavior change.
 
 Clicking **Preview** navigates to that URL, so the chosen experiences and
 toggles are locked in (and shareable). `?mep=off` turns off the `?mep`
@@ -218,6 +226,7 @@ from.
 | `akamaiLocale=<code>` | spoof Milo's detected country/market |
 | `mboxOverride.browserIp=<ip>` | align Target's IP-based geo-fencing with the spoofed country |
 | `mepMasMarket=true` | persist the M@S market spoof across reloads |
+| `meplcp` | preview-only LCP image check (see below) |
 | `?instant=<iso-date>` | simulate "now" (for promo scheduling windows) |
 
 ## Limitations
