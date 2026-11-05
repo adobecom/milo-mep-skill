@@ -5,7 +5,7 @@ runtime.)
 
 ## 2026-11-05
 
-**Skill release 1.1.9 — consolidated answer checklist and refreshed source (candidate)**
+**Skill release 1.1.9 — consolidated answer checklist and refreshed source (validated)**
 - Refreshed the bundled Milo snapshot to `main` at `3960bb8`. Documented the
   preview-only `meplcp` LCP Img Check and the in-block M@S `pzn` replacement
   parameter; replaced stale source line citations with function names.
@@ -49,7 +49,16 @@ runtime.)
   `consolidateObjects()`. Added a pinned-source test. Selector checks now name
   rows being corrected; accepted "Accept all" consent cells and
   "file/text isn't your permission" wording.
-- Fresh cross-model behavioral evaluation remains required before distribution.
+- Validated with fresh runs of all 28 cases on candidate `d51db0e` (Copilot CLI
+  1.0.105, medium effort), graded with `fff9eee` and `--da-audit`.
+  GPT-6.1 Sol: 28/28 on activation, automatic, correctness, and completeness.
+  Claude Opus 5.5: 28/28 on completeness and 27/28 elsewhere. On
+  `negative-component-css` it invoked the skill, then declined correctly with
+  no changes. That happened in 1 of 6 fresh runs; the 5 reruns did not invoke
+  it. The miss was accepted as an occasional activation miss.
+- The held-out forced-preview, row-country, fragment-lifecycle, remove-typo,
+  and missing-info cases informed fixes during this cycle, so they no longer
+  measure untuned transfer.
 
 ## 2026-11-04
 
