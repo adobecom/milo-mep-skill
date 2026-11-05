@@ -125,9 +125,9 @@ these for every response:
 
 ### Answer checklist (apply whichever items fit)
 
-- **Proposed selectors.** For every proposed element selector, including
-  illustrative ones and nested-fragment fixes: state that it matches
-  authored/plain HTML (even when the user supplied it), and tell the author to
+- **Selectors.** For every element selector you propose or diagnose
+  (user-supplied, illustrative, or a nested-fragment fix): state that it matches
+  authored/plain HTML, and tell the author to
   confirm it matches exactly the one intended element in the content that
   actually loads, including any replacement fragment. Do not imply an example
   is already verified. Without `#_all`, a command completes on its first match;
@@ -151,7 +151,13 @@ these for every response:
   (`?akamaiLocale=<cc>`) and compare an in-scope and an out-of-scope country;
   set each relevant consent state; leave that manifest's experience unforced
   (a forced `?mep` variant bypasses consent and country gates). Name the
-  expected result for each case. Page locale is not visitor country.
+  expected result for each case. Page locale is not visitor country. Never
+  reclassify consent to make an experience appear: `non-personalized offer
+  test` gives visitors without performance consent a random persisted variant
+  with no audience check, which is wrong for audience-targeted content.
+- **Native audiences.** When a new experience needs no Target, say **no Target
+  change is needed**; do not recommend disabling existing Target metadata that
+  other features use.
 - **Placeholder predictions.** Read `references/manifest-schema.md` even when
   inspecting the runtime directly. Label the **stored value**, **MEP
   substitution**, and **final page rendering** separately. An empty stored
@@ -195,8 +201,7 @@ difference between MEP-native personalization (no Target needed: device, OS,
 browser, locale, login, params, geo) and Target-dependent features (A/B tests,
 AAM/Target segments). Note the performance tradeoff: `target on` blocks page
 build; MEP alone is cheap.
-If a new native experience needs no Target, say **no Target change is needed**;
-do not recommend disabling existing Target metadata that other features use.
+For native experiences, see the Answer checklist's *Native audiences* item.
 
 ### 2. Interpret a manifest
 Given an xlsx or json, produce a reading that **leads with business framing and
@@ -250,6 +255,9 @@ answer checklist above.
   Prefer simplified selectors (`any-marquee primary-cta`) over brittle chains.
 - **MEP targets the first match by default**; add `#_all` to hit every match
   only when every match is intended. Otherwise narrow the selector.
+- **Fragment swaps don't chain.** A swap is looked up once by the link's
+  authored path; a row whose selector is another row's replacement path never
+  applies to that link. For one selector, the first sorted manifest's swap wins.
 - **Experience-column order is priority**; a user gets the first column they
   match for the entire manifest, not independently per row. Blank cells do
   **not** inherit actions from `all` or another experience, so a new column

@@ -89,7 +89,11 @@ concatenated in order by `consolidateArray()`; `replace` skips an element
 already marked replaced, but `updateAttribute` can write the same attribute
 again. `categorizeActions()` also overwrites `replacepage`/`updateframework`
 with later values. Verify the actual conflicting action rather than promising
-that every earlier manifest's value survives. `postlcp` Target delivery is
+that every earlier manifest's value survives. Fragment swaps do not chain:
+`fragment.js` looks up `mep.fragments` once by the link's authored path (or
+Lingo `originalHref`), and `handleFragmentCommand()` rewrites the href without
+another lookup, so a row keyed on another row's replacement path never applies
+to that link. `postlcp` Target delivery is
 handled separately; the shared sort is not a guarantee that a late response
 can undo changes already applied.
 

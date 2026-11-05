@@ -28,7 +28,17 @@ runtime.)
   cases therefore no longer test untuned transfer. Also accepted equivalent
   "forcing"/"all five rows" wording, rejected only asserted "MEP is broken",
   and dropped two over-strict review items (naming the template; a uniqueness
-  check for a selector the user did not propose).
+  check for a selector the user did not propose). A rubric-only follow-up
+  (`14e363d`) accepted "advertising accepted", "treats … as Normal", and
+  spoofed-country comparison without `?mep`, and replaced the LCP report-format
+  disclosure with "do not invent it".
+- After the targeted Opus run (`ae989e8`), added a "fragment swaps don't chain"
+  ground rule (source-verified), forbade reclassifying consent to make an
+  experience appear, extended selector checks to user-supplied selectors being
+  diagnosed, and moved "no Target change is needed" into the checklist so it
+  applies to authoring answers. The lifecycle and remove-typo cases now also
+  informed instructions. Accepted "I only read …" and "matches exactly one
+  intended CTA" as equivalent wording.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
 ## 2026-11-04
