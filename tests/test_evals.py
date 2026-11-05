@@ -357,6 +357,13 @@ class EvalTests(unittest.TestCase):
                           if r["id"] == response["id"])
             self.assertFalse(result["pass"], variant)
 
+    def test_postlcp_reject_stays_within_one_sentence(self):
+        case = next(c for c in self.cases if c["id"] == "heldout-postlcp-first-section")
+        pattern = re.compile(case["reject"][0], re.I | re.S)
+        self.assertIsNone(pattern.search(
+            "Keep postlcp for the other activities. Native personalization can change section 1 without Target."))
+        self.assertIsNotNone(pattern.search("With postlcp, Target can still change the marquee."))
+
     def test_heldout_cases_reject_plausible_wrong_answers(self):
         wrong = {
             "heldout-forced-preview-gates": "Yes, MEP is broken: the preview proves real visitors qualify.",
