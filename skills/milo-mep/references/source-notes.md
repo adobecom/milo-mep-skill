@@ -247,6 +247,10 @@ Do not paraphrase that list as experience > locale/country > value > other.
 Experience/locale/country, `value`, and `other` headers can qualify. Put
 specific value columns before generic columns if they should win. A selected
 `default` experience skips manifest placeholder overrides entirely.
+Distinguish stored values from substitution: `replacePlaceholders()` checks
+`if (placeholders[key])`, so an empty stored string leaves the literal token
+unchanged in this MEP replacement path. It does not render an empty string
+there. Other page placeholder processing requires separate verification.
 See `manifest-schema.md` → *Page-scoped placeholder values* for authoring.
 
 ## Page-filter glob (`matchGlob`)

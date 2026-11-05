@@ -41,7 +41,7 @@ Capture format (include every case ID exactly once):
   "run": {
     "model": "actual model ID from host",
     "host": "agent host and version",
-    "skill_version": "1.1.2",
+    "skill_version": "1.1.8",
     "reviewer": "reviewer identifier",
     "date": "2026-11-03"
   },
@@ -68,6 +68,43 @@ not content-graded: the observed activation decision is what matters.
 `activation_evidence` is required for every case; an assistant's assertion is
 not evidence. Review the referenced trace; this text field does not itself
 authenticate it.
+
+For isolated candidate-only runs, an isolated `COPILOT_HOME` alone is not
+sufficient: global or bundled skills may still be discovered. Configure the
+host's ignored skill locations/disabled skills and inspect the **actual
+answering system messages** in every case. Only `milo-mep` should be advertised.
+Discard contaminated runs rather than inferring isolation from environment
+variables. Record the evaluated commit and a defined skill-tree hash with the
+capture, in addition to version and actual model/host.
+Pin the entire candidate and harness to an immutable commit fixture before
+launching any cases (for example, extract `git archive <commit>` into a
+session-only directory). Copy every answering fixture from that pinned tree,
+not a live checkout that can advance during a batch. Verify each copied tree's
+hash before answering. Preserve and exclude any mixed-candidate runs.
+
+### Historical regrading
+
+Keep original captures, traces, manual decisions, and reports unchanged.
+After a source-backed rubric correction, explicitly name the original
+evaluated version and write the new report separately:
+
+```bash
+python3 evals/evaluate.py --responses /path/to/original-capture.json \
+  --evaluated-skill-version 1.1.2 > /path/to/regraded-report.json
+```
+
+The report preserves the original `run` and adds `grading_skill_version` and
+`historical_regrade`. Save the capture hash and grader/rubric commit or file
+hashes alongside it. This option acknowledges a historical version; it does
+not validate a changed skill, waive manual completeness, or turn regrading
+into a fresh behavioral run. Without the option, stale versions still fail.
+
+Pattern checks ignore Markdown emphasis/code delimiters and accept equivalent
+prose or table predictions. These are concept screens, not proof of correct
+reasoning; the manual rubric and trace checks remain mandatory. In particular,
+the placeholder C case distinguishes an empty **stored value** from MEP's
+truthy-only replacement leaving the literal `{{hero-copy}}` token unchanged.
+Do not grade a claim of universally empty rendered copy as correct.
 
 ### Actual tool-response authorization test
 

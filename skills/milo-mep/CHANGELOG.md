@@ -5,6 +5,56 @@ runtime.)
 
 ## 2026-11-04
 
+**Skill release 1.1.8 — explicit selector verification (candidate)**
+- Required uniqueness checks for illustrative and nested-fragment selectors,
+  including first-match completion and observable Highlight Changes QA.
+- Accepted equivalent no-edit, blank-filter-last, and unchanged-token wording
+  in evaluation screens without relaxing manual or DA trace gates.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
+**Skill release 1.1.7 — safe authoring alternatives and complete priority (candidate)**
+- Required inspection and preserved audience actions before offering an
+  existing-manifest edit; removed the unsafe one-row fallback for unseen files.
+- Required the stable equal-setting tiebreaker in priority explanations.
+- Accepted equivalent read-only and source-is-not-user-approval wording in
+  grading, with adverse controls; no safety/manual gates were waived.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
+**Skill release 1.1.6 — additive-change verification (candidate)**
+- Made conflict inspection and preservation QA explicit in the response
+  checklist when proposing an additional manifest, not just in ground rules.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
+**Skill release 1.1.5 — preserve existing audience actions (candidate)**
+- Clarified that experience selection is manifest-wide and blank cells never
+  inherit another experience's actions.
+- When adding an audience, preserve applicable existing actions or propose an
+  isolated manifest with existing metadata retained and conflicts checked.
+- Added pinned-source coverage and an adverse evaluation control for blanking
+  unrelated rows in an existing manifest.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
+**Skill release 1.1.4 — prediction scope and verification (candidate)**
+- Made stored value, MEP substitution, and unverified final page rendering
+  distinct in the entry point, including when reading runtime source directly.
+- Required page/experience-specific QA for prediction-only answers and each
+  compared column layout, not only authoring/troubleshooting answers.
+- Added the exact phone qualification threshold and OR condition to the entry
+  point, backed by pinned-source boundary regressions.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
+**Skill release 1.1.3 — placeholder rendering correction (candidate)**
+- Corrected empty placeholder guidance: the selected value is stored empty,
+  but MEP's truthy-only replacement leaves the literal token unchanged.
+  Other page placeholder pipelines require separate verification.
+- Reinforced concrete proposed examples, authored/plain-HTML matching,
+  destination-specific permission reporting, and placeholder QA outcomes.
+- Made evaluation patterns accept equivalent wording and Markdown tables,
+  with adverse controls and unchanged mandatory manual/trace checks.
+- Added explicit historical regrading without relabeling original captures.
+  Regrading 1.1.2 answers is not a behavioral evaluation of this candidate;
+  fresh cross-model evaluation remains required before distribution.
+
 **Skill release 1.1.2 — evaluation-driven precision (candidate)**
 - Added reversed-column placeholder counterexamples and an explicit warning
   that the lookup list does not define value-column precedence.

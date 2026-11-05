@@ -19,6 +19,40 @@ const parsePlaceholders = new Function("matchGlob", "createMartechMetadata", "ha
 );
 const config = () => ({ locale: { region: "us", ietf: "en-US" }, mep: {} });
 
+test("pinned phone targeting requires mobile detection and either screen dimension below 550", () => {
+  const loadTags = new Function("window", "navigator",
+    `${section("const getUA =", "const PERSONALIZATION_KEYS =")}; return PERSONALIZATION_TAGS;`);
+  for (const [userAgent, width, height, expected] of [
+    ["iPhone", 549, 900, true],
+    ["iPhone", 900, 549, true],
+    ["iPhone", 550, 550, false],
+    ["iPhone", 900, 900, false],
+    ["Desktop", 400, 400, false],
+  ]) {
+    const tags = loadTags({ screen: { width, height } }, { userAgent, maxTouchPoints: 0 });
+    assert.equal(tags.phone(), expected, `${userAgent} ${width}x${height}`);
+  }
+});
+
+const replacePlaceholders = new Function(
+  `${section("export function replacePlaceholders(", "const getUpdatedHref =")}; return replacePlaceholders;`,
+)();
+
+test("pinned MEP substitution retains literal tokens for empty stored values", () => {
+  for (const [row, stored, rendered] of [
+    [{ key: "hero-copy", value: "General", phone: "Phone copy" }, "General", "General"],
+    [{ key: "hero-copy", phone: "Phone copy", value: "General" }, "Phone copy", "Phone copy"],
+    [{ key: "hero-copy", phone: "", value: "General" }, "", "{{hero-copy}}"],
+  ]) {
+    const state = config();
+    parsePlaceholders([row], state, "phone", "/example/tool");
+    assert.equal(state.placeholders["hero-copy"], stored);
+    assert.equal(replacePlaceholders("{{hero-copy}}", state.placeholders), rendered);
+    assert.equal(replacePlaceholders("Before {{hero-copy}} after", state.placeholders),
+      `Before ${rendered} after`);
+  }
+});
+
 test("pinned runtime normalizes trusted origins but retains query and other hash content", () => {
   const normalize = new Function("getConfig", "isDamContent",
     `${section("export const normalizePath =", "export const getFileName =")}; return normalizePath;`)(
@@ -123,6 +157,35 @@ const commandKeys = {
   remove: "remove", replace: "replace", analyticIfSeen: "analyticifseen",
   updateAttribute: "updateattribute",
 };
+
+test("pinned runtime skips blank selected-experience cells rather than inheriting all", () => {
+  const parseRow = new Function(
+    "getConfig", "getFileName", "PAGE_URL", "TARGET_EXP_PREFIX", "getSelectorType",
+    "COMMANDS", "SELECTOR_TYPES", "GLOBAL_CMDS", "CREATE_CMDS",
+    `${section("const getVariantInfo =", "export function parseManifestVariants(")}; return getVariantInfo;`,
+  )(
+    config, () => "tool.json", new URL("https://www.adobe.com/example"),
+    "target-", () => "css", { updateattribute: true, remove: true },
+    { fragment: "fragment" }, [], {},
+  );
+  const variants = {
+    firefox: { commands: [], fragments: [] },
+    all: { commands: [], fragments: [] },
+  };
+  const names = Object.keys(variants);
+  const unrelated = {
+    action: "updateAttribute", selector: ".existing-link href",
+    firefox: "", all: "/example/existing-destination",
+  };
+  parseRow(unrelated, names, variants, "/example/tool.json");
+  parseRow({ action: "remove", selector: ".promo-banner", firefox: "TRUE", all: "" },
+    names, variants, "/example/tool.json");
+  assert.deepEqual(variants.firefox.commands.map(({ selector }) => selector), [".promo-banner"]);
+  assert.deepEqual(variants.all.commands.map(({ selector }) => selector), [".existing-link href"]);
+  parseRow({ ...unrelated, firefox: unrelated.all }, names, variants, "/example/tool.json");
+  assert.equal(variants.firefox.commands[1].content, "/example/existing-destination");
+});
+
 const modifySelector = new Function("COMMANDS_KEYS", "SELECTOR_TYPES", "getSelectorType",
   `${section("const updateEndNumber =", "function getSelectedElements(")}; return modifyNonFragmentSelector;`)(
   commandKeys, { twpButtons: "twpButtons" }, () => "css",
