@@ -127,9 +127,11 @@ these for every response:
   it matches authored/plain HTML, and tell the author to
   confirm it matches exactly the one intended element in the content that
   actually loads, including any replacement fragment. Do not imply an example
-  is already verified. Without `#_all`, a command completes on its first match;
-  `#_include-fragments` widens where it searches, not which match it picks, so
-  mention first-match completion when several fragments may match. Verify the
+  is already verified. Show a corrected selector in a complete example row
+  (action | selector | experience value). Without `#_all`, a command
+  completes on its first match; `#_include-fragments` widens where it
+  searches, not which match it picks, so mention first-match completion when
+  several fragments may match. Verify the
   intended element with Highlight Changes and its final attribute/content.
 - **Adding to existing personalization.** Never offer "if a manifest already
   exists, just add this row to it" for a manifest you have not inspected.
@@ -153,6 +155,11 @@ these for every response:
   reclassify consent to make an experience appear: `non-personalized offer
   test` gives visitors without performance consent a random persisted variant
   with no audience check, which is wrong for audience-targeted content.
+- **Page filters and promo schedules.** Verify both a case that should match
+  and one that should not: the intended pages plus an unrelated page; a time
+  inside the window plus one just outside it. Outside its schedule (or
+  `locales`), a promo manifest loads as Default unless its experience is
+  forced with `?mep`, so check bounds unforced.
 - **Native audiences.** When a new experience needs no Target, say **no Target
   change is needed**; do not recommend disabling existing Target metadata that
   other features use.

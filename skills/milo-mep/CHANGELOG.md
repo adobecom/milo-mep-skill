@@ -27,6 +27,13 @@ runtime.)
   regular cases for the two corrections, and held-out cases for single-`*`
   page filters, promo `?instant` time zones, and `postlcp` first-section
   limits, with adverse controls. The held-out scenarios are not in the skill.
+- From the first targeted runs: the answer checklist now asks for matching and
+  non-matching checks for page filters and promo schedules (a promo outside
+  its window loads as Default unless forced), and for corrected selectors in a
+  complete example row. Source notes now state that schedule bounds are
+  inclusive and that a blank `start`/`end` is open-ended rather than disabled,
+  with a pinned-source test. Corrected the `country-not-list` reference answer:
+  `?akamaiLocale` outranks the country cookie.
 - Fresh cross-model behavioral evaluation remains required before distribution.
 
 ## 2026-11-05

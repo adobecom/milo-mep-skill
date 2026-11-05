@@ -359,3 +359,20 @@ test("pinned countryip needs no geolocation switch and negates a whole country l
   assert.equal(hasCountryMatch("countryip(us,ca)", { mep: {} }), false);
   assert.ok(source.includes("name.split(/,(?![^(]*\\))/)"));
 });
+
+test("pinned promo schedule bounds are inclusive and a blank bound is open-ended", () => {
+  const promo = readFileSync(new URL("../skills/milo-mep/assets/source/promo-utils.js", import.meta.url), "utf8");
+  const pick = (start, end) => promo.slice(promo.indexOf(start), promo.indexOf(end)).replace(/^export /gm, "");
+  const toDate = new Function(`${pick("const GMTStringToLocalDate =", "const APAC =")}; return GMTStringToLocalDate;`)();
+  const isDisabled = new Function("localeCode",
+    `${pick("export const isDisabled =", "const isManifestWithinLocale =")}; return isDisabled;`)("us");
+  assert.ok(promo.includes("start: GMTStringToLocalDate(start),"));
+  const at = (instant) => new URLSearchParams({ instant });
+  const event = (start, end) => ({ start: toDate(start), end: toDate(end) });
+  const black = event("2026-11-27T00:00:00", "2026-11-30T23:59:59");
+  assert.equal(isDisabled(black, at("2026-11-26T23:59:59Z")), true);
+  assert.equal(isDisabled(black, at("2026-11-27T00:00:00Z")), false);
+  assert.equal(isDisabled(event("2026-11-27T00:00:00", ""), at("2027-06-01T00:00:00Z")), false);
+  assert.equal(isDisabled(event("", "2026-11-30T00:00:00"), at("2020-01-01T00:00:00Z")), false);
+  assert.match(source, /if \(disabled && !variantOverride\?\.\[normalizePath\(manifestPath\)\]\) \{\n\s+return createDefaultExperiment\(info\);/);
+});

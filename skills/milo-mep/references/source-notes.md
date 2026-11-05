@@ -287,4 +287,13 @@ Promos are scheduled via metadata, not just a manifest reference:
   `name|start|end|manifestPath|locales|cdtStart|cdtEnd` (GMT dates).
 - Regions are `APAC`, `EMEA`, `AMERICAS`, `JP` (locale lists in the file).
 - A promo is disabled outside its `start`/`end` window or its `locales`.
-  `?instant=<date>` overrides "now" for testing.
+  `?instant=<date>` overrides "now" for testing. The start and end are
+  inclusive (`isDisabled` checks `current < start || current > end`).
+- `getRegionalPromoManifests` always wraps `start`/`end` with
+  `GMTStringToLocalDate`, so a blank bound becomes an Invalid Date (still
+  truthy). `isDisabled`'s one-bound check therefore never fires; comparisons
+  with the invalid bound are false, leaving that side **open-ended** (blank
+  end: on from start onward; blank start: on until end).
+- A disabled promo manifest loads as Default (`createDefaultExperiment`)
+  unless its experience is forced with `?mep` (`disabled && !variantOverride`
+  in `personalization.js`), so verify schedule bounds unforced.
