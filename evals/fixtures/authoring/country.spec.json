@@ -1,0 +1,29 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/products/premiere.html",
+      "htmlFile": "pages/premiere.html",
+      "visitors": [
+        {
+          "id": "gb",
+          "country": "GB"
+        },
+        {
+          "id": "ie",
+          "country": "IE"
+        },
+        {
+          "id": "ca",
+          "country": "CA"
+        },
+        {
+          "id": "us",
+          "country": "US"
+        },
+        {
+          "id": "unknown"
+        }
+      ]
+    }
+  ]
+}

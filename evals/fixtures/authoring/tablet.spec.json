@@ -1,0 +1,25 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "htmlFile": "pages/photoshop.html",
+      "visitors": [
+        {
+          "id": "ipad",
+          "device": "ipad"
+        },
+        {
+          "id": "android-tablet",
+          "device": "android-tablet"
+        },
+        {
+          "id": "phone",
+          "device": "iphone"
+        },
+        {
+          "id": "desktop"
+        }
+      ]
+    }
+  ]
+}

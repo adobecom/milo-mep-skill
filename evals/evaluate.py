@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import sys
 
+import artifacts
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -28,6 +30,7 @@ def load_cases():
             path = (ROOT / evidence).resolve()
             if not path.is_relative_to(ROOT) or not path.is_file():
                 raise ValueError(f"invalid evidence: {evidence}")
+        artifacts.validate_case(case)
     return cases
 
 
@@ -102,7 +105,7 @@ def judge_failures(case, response, missed):
     return failed, sorted(set(waived))
 
 
-def grade(cases, capture, *, evaluated_skill_version=None, da_audit=None):
+def grade(cases, capture, *, evaluated_skill_version=None, da_audit=None, artifacts_dir=None):
     if not isinstance(capture, dict) or not isinstance(capture.get("run"), dict):
         raise ValueError("capture must contain a run object")
     if not isinstance(capture.get("responses"), list):
@@ -145,6 +148,8 @@ def grade(cases, capture, *, evaluated_skill_version=None, da_audit=None):
         for pattern in case["reject"]:
             if re.search(pattern, check_text, re.I | re.S):
                 failed.append(f"forbidden assertion: {pattern}")
+        artifact_failed = artifacts.check(case, response, artifacts_dir)[0] if "artifact" in case else []
+        failed += artifact_failed
         automatic = not failed
         failed += judge_failed
         if not isinstance(response.get("activation_evidence"), str) or not response["activation_evidence"].strip():
@@ -180,6 +185,7 @@ def grade(cases, capture, *, evaluated_skill_version=None, da_audit=None):
             failed.append("manual review notes missing")
         results.append({
             "id": case["id"], "automatic_pass": automatic, "waived_checks": waived,
+            **({"artifact_failures": artifact_failed} if "artifact" in case else {}),
             "correctness_pass": response.get("correctness_pass") is True,
             "completeness_pass": response.get("completeness_pass") is True,
             "pass": not failed, "failures": failed,
@@ -217,7 +223,7 @@ JUDGE_SCHEMA = {
 }
 
 
-def judge_prompts(cases, capture):
+def judge_prompts(cases, capture, artifacts_dir=None):
     """Self-contained prompts for an independent judge conversation (no model call here)."""
     responses = {r.get("id"): r for r in capture.get("responses", []) if isinstance(r, dict)}
     prompts = []
@@ -241,6 +247,16 @@ def judge_prompts(cases, capture):
             *[f"  {i}. {item}" for i, item in enumerate(case["review"])],
             f"Evidence: {', '.join(case['evidence'])}",
         ]
+        if "artifact" in case:
+            failures, summary = artifacts.check(case, response, artifacts_dir)
+            lines += [
+                "",
+                "The answer had to write a manifest workbook. The grader read it, linted it, and simulated it",
+                "against fixture pages (labels are grader-only element ids). Judge the workbook too:",
+                summary or "(no readable workbook)",
+                *(["Automatic artifact failures (already counted; not waivable):", *[f"  - {f}" for f in failures]]
+                  if failures else []),
+            ]
         if missed:
             lines += [
                 "",
@@ -286,6 +302,12 @@ def main():
                       help="export judge prompts for a capture's activated answers")
     mode.add_argument("--apply-judgments", type=Path, nargs=2, metavar=("CAPTURE", "JUDGMENTS"),
                       help="print the capture with judge fields merged in")
+    mode.add_argument("--write-workspace", nargs=2, metavar=("CASE", "DIR"),
+                      help="create a case's answering workspace (neutral fixture plus stripped case files)")
+    mode.add_argument("--collect", nargs=3, metavar=("CASE", "WORKSPACE", "ARTIFACTS_DIR"),
+                      help="copy files an answer created/changed into ARTIFACTS_DIR/CASE; print the capture list")
+    parser.add_argument("--artifacts-dir", type=Path, nargs="+",
+                        help="collected artifact directory per capture, in the same order; required for authoring cases")
     parser.add_argument("--da-audit", type=Path, nargs="+",
                         help="mock_da.py JSONL audit per capture, in the same order; required for the live-edit case")
     parser.add_argument("--min-pass-rate", type=float, default=1.0,
@@ -299,11 +321,27 @@ def main():
             raise ValueError("--evaluated-skill-version requires --responses")
         if args.da_audit is not None and not args.responses:
             raise ValueError("--da-audit requires --responses")
+        if args.artifacts_dir is not None and not (args.responses or args.judge_prompts):
+            raise ValueError("--artifacts-dir requires --responses or --judge-prompts")
         if args.prompts:
-            print(json.dumps([{"id": c["id"], "prompt": c["prompt"]} for c in cases], indent=2))
+            print(json.dumps([{"id": c["id"], "prompt": c["prompt"],
+                               **({"workspace_files": artifacts.workspace_listing(c)} if c.get("workspace_files") else {})}
+                              for c in cases], indent=2))
+            return 0
+        by_id = {c["id"]: c for c in cases}
+        if args.write_workspace:
+            case_id, out_dir = args.write_workspace
+            print("\n".join(artifacts.write_workspace(by_id[case_id], Path(out_dir))))
+            return 0
+        if args.collect:
+            case_id, workspace, out_dir = args.collect
+            print(json.dumps(artifacts.collect(by_id[case_id], Path(workspace), Path(out_dir)), indent=2))
             return 0
         if args.judge_prompts:
-            print(json.dumps(judge_prompts(cases, json.loads(args.judge_prompts.read_text())), indent=2))
+            if args.artifacts_dir is not None and len(args.artifacts_dir) != 1:
+                raise ValueError("give one --artifacts-dir with --judge-prompts")
+            print(json.dumps(judge_prompts(cases, json.loads(args.judge_prompts.read_text()),
+                                           args.artifacts_dir[0] if args.artifacts_dir else None), indent=2))
             return 0
         if args.apply_judgments:
             capture, judgments = (json.loads(p.read_text()) for p in args.apply_judgments)
@@ -316,10 +354,13 @@ def main():
         digests = [hashlib.sha256(p.read_bytes()).hexdigest() for p in args.responses]
         if len(set(digests)) != len(digests):
             raise ValueError("the same capture was given more than once")
+        if args.artifacts_dir is not None and len(args.artifacts_dir) != len(args.responses):
+            raise ValueError("give one --artifacts-dir per --responses capture, in the same order")
         audits = [load_da_audit(p) for p in args.da_audit] if args.da_audit else [None] * len(args.responses)
+        dirs = args.artifacts_dir or [None] * len(args.responses)
         reports = [grade(cases, json.loads(p.read_text()),
-                         evaluated_skill_version=args.evaluated_skill_version, da_audit=audit)
-                   for p, audit in zip(args.responses, audits)]
+                         evaluated_skill_version=args.evaluated_skill_version, da_audit=audit, artifacts_dir=d)
+                   for p, audit, d in zip(args.responses, audits, dirs)]
         if len(reports) == 1:
             print(json.dumps(reports[0], indent=2))
             return 0 if reports[0]["passed"] else 1

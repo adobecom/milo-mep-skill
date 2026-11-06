@@ -1,0 +1,22 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/products/acrobat.html",
+      "htmlFile": "pages/acrobat.html",
+      "visitors": [
+        {
+          "id": "signed-out-phone",
+          "device": "iphone"
+        },
+        {
+          "id": "signed-in-phone",
+          "signedIn": true,
+          "device": "iphone"
+        },
+        {
+          "id": "signed-out-desktop"
+        }
+      ]
+    }
+  ]
+}

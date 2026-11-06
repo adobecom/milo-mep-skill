@@ -56,7 +56,6 @@ authoritative 404 results.
 - unknown/misspelled **action** (`remvoe` → "did you mean 'remove'?")
 - an action that **requires a selector** but has none (replace/remove/insert*/
   updateAttribute/updateMetadata)
-- a row with a **selector/values but no action** (silently skipped at runtime)
 - an **`all` column that isn't last** (matches everyone; columns to its right
   never apply)
 - page filter that won't **compile as regex**, has a **backslash**, has a
@@ -69,6 +68,8 @@ authoritative 404 results.
 
 **Warnings** (likely mistakes):
 - **no-op row** (an action with no value in any experience column → does nothing)
+- a row with a **selector/values but no action** (skipped at runtime; authors
+  often blank the action on purpose to switch a row off, so confirm intent)
 - `remove` value not exactly `true`/`false`/`1` (a typo like `flse`/`0`/`false `
   inverts intent)
 - **backslash in a fragment path/URL** (auto-corrected for absolute URLs, breaks

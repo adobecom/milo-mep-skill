@@ -1,6 +1,6 @@
 # Skill behavioral evaluations
 
-The 33 cases in `cases.json` cover activation (including implicit MEP requests and negative
+The 41 cases in `cases.json` cover activation (including implicit MEP requests and negative
 examples), priority, consent defaults, localization, selectors, experience
 order, trusted fragment hosts, live-edit authorization, page-scoped
 placeholders, forced-preview carry-over, class-attribute replacement,
@@ -8,6 +8,8 @@ existing M@S Studio href updates, forced-preview gating, info-value casing,
 missing info sheets, `remove` cell typos, the LCP image check, row-level
 country filters, negated country lists, numeric selector suffixes, single-`*`
 page filters, promo `?instant` time zones, and `postlcp` first-section limits.
+Eight authoring cases (added in 1.1.11) require the answer to **write a manifest
+`.xlsx`** that the grader reads, lints, and simulates (see *Authoring cases*).
 Cases added in 1.1.10 are synthetic versions of recurring community question
 themes, verified against the pinned source. All examples are
 synthetic. Evidence paths and manual rubrics accompany each case.
@@ -49,7 +51,7 @@ Capture format (include every case ID exactly once):
   "run": {
     "model": "actual model ID from host",
     "host": "agent host and version",
-    "skill_version": "1.1.10",
+    "skill_version": "1.1.11",
     "reviewer": "reviewer identifier",
     "date": "2026-11-03"
   },
@@ -116,6 +118,48 @@ neutral Milo-style site (a marquee block and global styles) so an answering
 agent sees a realistic code repository instead of a directory that contains
 only the skill. It deliberately has no personalization code, manifests, or
 evaluation material; a test enforces that. Do not add rubric content to it.
+
+### Authoring cases (artifact grading)
+
+Cases with an `artifact` spec ask the agent to save a manifest workbook. For
+each one:
+
+1. Seed a fresh answering workspace (the neutral workspace plus the case's
+   fixture pages/manifests, with grader-only `data-eval` labels stripped):
+   `python3 evals/evaluate.py --write-workspace CASE_ID /session-only/ws`.
+   Install the candidate under its `.github/skills/` as usual. `--prompts`
+   lists these files as `workspace_files` for each authoring case.
+2. Run the prompt there with file **write** and shell tools limited to that
+   workspace, so the agent can use `scripts/mep_xlsx.py`. Do not give it the
+   grader, fixtures directory, or specs.
+3. Collect what the agent created or changed (agent config directories and
+   unchanged seed files are ignored):
+   `python3 evals/evaluate.py --collect CASE_ID /session-only/ws /session-only/artifacts`.
+   Put the printed `[{path, sha256}]` list in the case's capture response as
+   `artifacts`.
+4. Grade with one artifacts directory per capture, in order:
+   `--responses run1.json ... --artifacts-dir arts1 ...` (also accepted, once,
+   with `--judge-prompts`, which adds the workbook, lint, and simulation
+   summary to the judge prompt).
+
+The artifact grader requires exactly one `.xlsx` whose path matches the case's
+naming/folder convention, an intact template (`helix-info`,
+`helix-experiences`, `readme`), matching info values, experience-column order,
+and rows, no lint errors, preserved original rows for edits, and the expected
+simulated behavior per page and visitor. Artifact failures are automatic
+failures and **cannot be waived**. The `reference_artifact` in each case
+builds a passing workbook for grader tests only; never show it to the agent.
+
+`evals/simulate.mjs` is the offline behavior simulator behind step 4. It loads
+the pinned `personalization.js` with stubbed browser globals for each visitor
+(device, sign-in, country, locale, entitlements, forced `override`) and
+reports the selected experience, the rows that apply, the fixture elements
+each selector matches in **plain** HTML, resolved placeholders, and metadata
+updates. It does not render or mutate the page, fetch fragments, or call
+Target (simulate a Target experience with `override`). An unsupported selector
+reports an error instead of a false "no match". Run it directly with
+`node evals/simulate.mjs --manifest manifest.json --spec spec.json`; specs and
+labelled fixture pages live in `evals/fixtures/authoring/`.
 
 ### Judge verdicts and check waivers
 

@@ -1,0 +1,31 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/products/photoshop/plans.html",
+      "htmlFile": "pages/photoshop-plans.html",
+      "visitors": [
+        {
+          "id": "visitor"
+        }
+      ]
+    },
+    {
+      "url": "https://www.adobe.com/fr/products/illustrator/plans.html",
+      "htmlFile": "pages/fr-illustrator-plans.html",
+      "visitors": [
+        {
+          "id": "visitor"
+        }
+      ]
+    },
+    {
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "htmlFile": "pages/photoshop-with-plans-banner.html",
+      "visitors": [
+        {
+          "id": "visitor"
+        }
+      ]
+    }
+  ]
+}

@@ -242,7 +242,7 @@ export function lintManifest(m) {
       const hasContent = selector || String(pageFilterOf(row)).trim() ||
         expCols.some((c) => String(row[c] ?? "").trim());
       if (hasContent)
-        add("error", `experiences row ${n}`, "row has a selector/values but no action → the row is skipped at runtime.");
+        add("warn", `experiences row ${n}`, "row has a selector/values but no action → the row is skipped at runtime (fine if the action was blanked on purpose to disable it).");
       return;
     }
     const where = `experiences row ${n} (action=${action || "∅"}, selector=${selector.slice(0, 40) || "∅"})`;

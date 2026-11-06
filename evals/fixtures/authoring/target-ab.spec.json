@@ -1,0 +1,18 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/products/illustrator.html",
+      "htmlFile": "pages/illustrator.html",
+      "visitors": [
+        {
+          "id": "trial-cta",
+          "override": "target-trial-cta"
+        },
+        {
+          "id": "control",
+          "override": "target-control"
+        }
+      ]
+    }
+  ]
+}

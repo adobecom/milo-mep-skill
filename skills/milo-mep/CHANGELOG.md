@@ -5,7 +5,30 @@ runtime.)
 
 ## 2026-11-06
 
-**Skill release 1.1.10 — leaner entry point and evaluation tooling (unreleased candidate)**
+**Skill release 1.1.11 — manifest editing and authoring evaluations (unreleased candidate)**
+- `mep_xlsx.py edit` changes an existing workbook in place from a JSON spec
+  (info values; experiences/placeholders `add_columns`, `update`, `delete`,
+  `append` by row match). Unrelated rows, sheets, the readme, styles, and
+  dropdowns are preserved; ambiguous or unknown matches write nothing.
+  Authoring guidance now uses `edit` for existing manifests and asks agents
+  to lint the file they wrote.
+- Lint: a row with a selector/values but no action is now a warning, not an
+  error. Published manifests often blank the action on purpose to disable a
+  row.
+- `actions.md` documents the common `updateMetadata` targets (`gnav-source`,
+  `gnav-promo-source`) from the pinned source.
+- Evaluation harness: eight authoring cases (41 total; two held out) in which
+  the answer saves a manifest `.xlsx`. The grader checks its path convention,
+  template sheets, info, column priority, rows, lint, preserved rows for
+  edits, and simulated behavior per page and visitor. These failures cannot
+  be waived. Added `--write-workspace`, `--collect`, and `--artifacts-dir`.
+- New offline simulator (`evals/simulate.mjs`) runs the pinned
+  `personalization.js` against labelled plain-HTML fixtures to report the
+  selected experience, selector matches, placeholders, and metadata updates.
+  Its selector engine was cross-checked against Chrome.
+- Fresh cross-model behavioral evaluation remains required before distribution.
+
+**Skill release 1.1.10 — leaner entry point and evaluation tooling**
 - Trimmed `SKILL.md`: condensed template, xlsx, linter, and source-authority
   text that duplicated the routing table or references, and moved
   maintainer-only snapshot refresh steps to the repository README. The

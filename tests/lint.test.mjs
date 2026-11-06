@@ -24,7 +24,7 @@ test("published JSON and normalized XLSX have identical findings", () => {
 });
 
 for (const [name, rows, cols, severity, pattern] of [
-  ["missing action", [{ ...row, action: "" }], columns, "error", /no action/],
+  ["missing action", [{ ...row, action: "" }], columns, "warn", /no action/],
   ["missing selector", [{ ...row, selector: "" }], columns, "error", /requires a selector/],
   ["all shadows phone", [row], [...columns, "phone"], "error", /isn't last/],
   ["empty experience", [{ ...row, all: "" }], columns, "warn", /does nothing/],

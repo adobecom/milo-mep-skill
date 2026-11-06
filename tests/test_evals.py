@@ -9,7 +9,11 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evals"))
+import artifacts
 from evaluate import grade as grade_capture, load_cases
+
+sys.path.insert(0, str(ROOT / "skills/milo-mep/scripts"))
+from mep_xlsx import edit_manifest, write_manifest
 
 REFERENCE_DA_CALLS = [
     {"name": "da_get_source", "arguments": {"org": "eval-org", "site": "eval-site", "path": path}}
@@ -17,8 +21,41 @@ REFERENCE_DA_CALLS = [
 ]
 
 
+ARTIFACTS = tempfile.TemporaryDirectory()
+REFERENCE_ARTIFACTS = {}
+
+
+def build_reference_artifact(case, out_dir):
+    """Write a case's reference manifest the way an answering agent would, then collect it."""
+    ref = case["reference_artifact"]
+    with tempfile.TemporaryDirectory() as workspace:
+        artifacts.write_workspace(case, workspace)
+        target = Path(workspace) / ref["path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if "write" in ref:
+            write_manifest(str(target), **ref["write"])
+        else:
+            edit_manifest(str(target), str(target), ref["edit"])
+        return artifacts.collect(case, workspace, out_dir)
+
+
+def setUpModule():
+    for case in load_cases():
+        if "reference_artifact" in case:
+            REFERENCE_ARTIFACTS[case["id"]] = build_reference_artifact(case, ARTIFACTS.name)
+
+
+def tearDownModule():
+    ARTIFACTS.cleanup()
+
+
+def load_version():
+    return re.search(r'^  version: "([^"]+)"$', (ROOT / "skills/milo-mep/SKILL.md").read_text(), re.M).group(1)
+
+
 def grade(cases, capture, **options):
     options.setdefault("da_audit", copy.deepcopy(REFERENCE_DA_CALLS))
+    options.setdefault("artifacts_dir", ARTIFACTS.name)
     return grade_capture(cases, capture, **options)
 
 
@@ -36,6 +73,7 @@ class EvalTests(unittest.TestCase):
                  "activation_evidence": "Synthetic grader fixture; not a real activation trace.",
                  **({"da_tool_calls": copy.deepcopy(REFERENCE_DA_CALLS)}
                     if c["id"] == "live-edit-authorization" else {}),
+                 **({"artifacts": copy.deepcopy(REFERENCE_ARTIFACTS[c["id"]])} if "artifact" in c else {}),
                  "review_notes": "Grader fixture only; not a behavioral evaluation."}
                 for c in self.cases
             ],
@@ -431,7 +469,10 @@ class EvalTests(unittest.TestCase):
     def test_cli_exports_blind_prompts_and_reports_failures(self):
         command = [sys.executable, str(ROOT / "evals/evaluate.py")]
         prompts = subprocess.run(command + ["--prompts"], capture_output=True, text=True, check=True)
-        self.assertEqual(json.loads(prompts.stdout), [{"id": c["id"], "prompt": c["prompt"]} for c in self.cases])
+        self.assertEqual(json.loads(prompts.stdout), [
+            {"id": c["id"], "prompt": c["prompt"],
+             **({"workspace_files": [f["dest"] for f in c["workspace_files"]]} if c.get("workspace_files") else {})}
+            for c in self.cases])
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "responses.json"
             audit = Path(temp) / "audit.jsonl"
@@ -445,7 +486,7 @@ class EvalTests(unittest.TestCase):
             bad.write_text("not json\n")
             self.assertEqual(subprocess.run(command + ["--responses", str(path), "--da-audit", str(bad)],
                                             capture_output=True).returncode, 2)
-            command = command + ["--da-audit", str(audit)]
+            command = command + ["--da-audit", str(audit), "--artifacts-dir", ARTIFACTS.name]
             for expected, capture in ((0, self.capture), (1, {**self.capture, "responses": [
                 {**r, "correctness_pass": False} for r in self.capture["responses"]
             ]}), (2, {}), (2, []), (2, {"run": [], "responses": []}),
@@ -557,7 +598,8 @@ class EvalTests(unittest.TestCase):
                                                    "run": {**self.capture["run"], "date": f"2026-11-0{i + 1}"}}
                 path.write_text(json.dumps(capture))
                 audit.write_text("".join(json.dumps(call) + "\n" for call in REFERENCE_DA_CALLS))
-            base = command + ["--responses", *map(str, paths), "--da-audit", *map(str, audits)]
+            base = command + ["--responses", *map(str, paths), "--da-audit", *map(str, audits),
+                              "--artifacts-dir", *[ARTIFACTS.name] * 3]
             result = subprocess.run(base, capture_output=True, text=True)
             self.assertEqual(result.returncode, 1, result.stderr)
             summary = json.loads(result.stdout)["aggregate"]
@@ -576,6 +618,170 @@ class EvalTests(unittest.TestCase):
             result = subprocess.run(command + ["--responses", *map(str, paths[:2]),
                                                "--evaluated-skill-version", "1.1.2"], capture_output=True)
             self.assertEqual(result.returncode, 2)
+
+
+class AuthoringArtifactTests(unittest.TestCase):
+    """Adverse controls: wrong manifests must fail the artifact grader, not just the prose checks."""
+
+    def setUp(self):
+        self.cases = load_cases()
+        self.by_id = {c["id"]: c for c in self.cases}
+
+    def variant(self, case_id, mutate=None, path=None, response=None):
+        case = copy.deepcopy(self.by_id[case_id])
+        ref = case["reference_artifact"]
+        if mutate:
+            mutate(ref)
+        if path:
+            ref["path"] = path
+        with tempfile.TemporaryDirectory() as directory:
+            items = build_reference_artifact(case, directory)
+            return artifacts.check(self.by_id[case_id], response(items) if response else {"artifacts": items},
+                                   directory)[0]
+
+    def assertFails(self, failures, fragment):
+        self.assertTrue(any(fragment in f for f in failures), failures)
+
+    def test_reference_artifacts_pass_every_authoring_case(self):
+        authoring = [c["id"] for c in self.cases if "artifact" in c]
+        self.assertGreaterEqual(len(authoring), 8)
+        self.assertTrue(any(c.get("split") == "holdout" for c in self.cases if "artifact" in c))
+        for case_id in authoring:
+            with self.subTest(case=case_id):
+                self.assertEqual(self.variant(case_id), [])
+
+    def test_wrong_experience_priority_fails(self):
+        def swap(ref):
+            ref["write"]["experiences"]["columns"][3:5] = ["phone", "loggedin"]
+        failures = self.variant("author-signedin-phone-priority", swap)
+        self.assertFails(failures, "experience columns")
+        self.assertFails(failures, "simulation")
+
+    def test_single_star_page_filter_fails_simulation(self):
+        def single(ref):
+            ref["write"]["experiences"]["rows"][0]["page filter (optional)"] = "/products/*/plans"
+        self.assertFails(self.variant("heldout-author-promo-plans-filter", single), "simulation")
+
+    def test_overbroad_page_filter_fails_unchanged_page(self):
+        def broad(ref):
+            ref["write"]["experiences"]["rows"][0]["page filter (optional)"] = "**/products/**"
+        self.assertFails(self.variant("heldout-author-promo-plans-filter", broad), "should be unchanged")
+
+    def test_wrong_location_or_name_fails(self):
+        for path in ("content/photoshop.xlsx", "content/products/photoshop-mep.xlsx", "photoshop.xlsx"):
+            with self.subTest(path=path):
+                self.assertFails(self.variant("author-signedin-phone-priority", path=path), "expected exactly one")
+
+    def test_missing_changed_or_unlisted_files_fail(self):
+        case = "author-signedin-phone-priority"
+        self.assertFails(self.variant(case, response=lambda items: {}), "artifacts list missing")
+        self.assertFails(self.variant(case, response=lambda items: {"artifacts": [
+            {**items[0], "sha256": "0" * 64}]}), "hash mismatch")
+        self.assertFails(self.variant(case, response=lambda items: {"artifacts": [
+            {**items[0], "path": "content/products/other.xlsx"}]}), "file missing")
+        self.assertFails(self.variant(case, response=lambda items: {"artifacts": [
+            {**items[0], "path": "../photoshop.xlsx"}]}), "expected exactly one")
+        self.assertEqual(artifacts.check(self.by_id[case], {"artifacts": []}, None)[0], ["artifact directory missing"])
+
+    def test_grader_labels_in_manifest_fail(self):
+        def labelled(ref):
+            ref["write"]["experiences"]["rows"][0]["selector"] = '[data-eval="section1"]'
+        self.assertFails(self.variant("author-insert-tablet-section", labelled), "data-eval")
+
+    def test_selector_matching_nothing_fails(self):
+        def missing(ref):
+            ref["write"]["experiences"]["rows"][0]["selector"] = "section9"
+        self.assertFails(self.variant("author-insert-tablet-section", missing), "matched nothing")
+
+    def test_lint_error_fails(self):
+        def typo(ref):
+            ref["write"]["experiences"]["rows"][0]["action"] = "replcae"
+        self.assertFails(self.variant("author-signedin-phone-priority", typo), "lint error")
+
+    def test_value_placeholder_column_first_fails_locale_pages(self):
+        def value_first(ref):
+            ref["write"]["placeholders"]["columns"] = ["key", "value", "fr", "jp"]
+        self.assertFails(self.variant("author-locale-placeholders", value_first), "/fr/products/photoshop")
+
+    def test_edit_must_preserve_existing_rows(self):
+        def drop(ref):
+            ref["edit"]["experiences"]["delete"] = [{"match": {"selector": "any-marquee"}}]
+        self.assertFails(self.variant("author-edit-existing-manifest", drop), "row changed or removed")
+
+    def test_waivers_cannot_rescue_artifact_failures(self):
+        case = self.by_id["author-signedin-phone-priority"]
+        response = {"id": case["id"], "activated": True, "answer": case["reference_answer"],
+                    "correctness_pass": True, "completeness_pass": True, "artifacts": [],
+                    "activation_evidence": "fixture", "review_notes": "fixture"}
+        with tempfile.TemporaryDirectory() as directory:
+            result = grade([case], {"run": {"model": "m", "host": "h", "reviewer": "r", "date": "2026-11-03",
+                                            "skill_version": load_version()}, "responses": [response]},
+                           artifacts_dir=directory)
+        self.assertFalse(result["passed"])
+        self.assertFalse(result["results"][0]["automatic_pass"])
+        self.assertTrue(result["results"][0]["artifact_failures"])
+
+    def test_answering_workspace_is_stripped_of_grader_labels(self):
+        for case in self.cases:
+            if not case.get("workspace_files"):
+                continue
+            with self.subTest(case=case["id"]), tempfile.TemporaryDirectory() as directory:
+                listing = artifacts.write_workspace(case, directory)
+                self.assertTrue(set(artifacts.workspace_listing(case)) <= set(listing))
+                for path in Path(directory).rglob("*"):
+                    if path.is_file() and path.suffix != ".xlsx":
+                        text = path.read_text().lower()
+                        for word in ("data-eval", "evaluat", "rubric", "grader", "heldout"):
+                            self.assertNotIn(word, text, path)
+                self.assertEqual(artifacts.collect(case, directory, Path(directory) / "out"), [])
+                with self.assertRaises(ValueError):
+                    artifacts.write_workspace(case, directory)
+
+    def test_collect_ignores_agent_config_and_reports_changes(self):
+        case = self.by_id["author-edit-existing-manifest"]
+        with tempfile.TemporaryDirectory() as workspace, tempfile.TemporaryDirectory() as out:
+            artifacts.write_workspace(case, workspace)
+            (Path(workspace) / ".github/skills").mkdir(parents=True, exist_ok=True)
+            (Path(workspace) / ".github/skills/note.md").write_text("x")
+            (Path(workspace) / "content/products/acrobat.xlsx").write_bytes(b"changed")
+            found = artifacts.collect(case, workspace, out)
+            self.assertEqual([f["path"] for f in found], ["content/products/acrobat.xlsx"])
+            self.assertEqual((Path(out) / case["id"] / found[0]["path"]).read_bytes(), b"changed")
+
+    def test_case_schema_rejects_bad_artifact_specs(self):
+        case = self.by_id["author-signedin-phone-priority"]
+        for mutate in (
+            lambda c: c["reference_artifact"].update(path="content/elsewhere.xlsx"),
+            lambda c: c.pop("reference_artifact"),
+            lambda c: c["artifact"].update(unknown=1),
+            lambda c: c["artifact"]["simulate"]["expect"][0].update(page="https://example.com/"),
+            lambda c: c["artifact"]["simulate"]["expect"][0].update(unchanged=["no-such-label"]),
+            lambda c: c.update(workspace_files=[{"src": "evals/fixtures/missing.html", "dest": "x.html"}]),
+            lambda c: c.update(workspace_files=[{"src": "evals/cases.json", "dest": ".github/x"}]),
+            lambda c: c.update(activate=False),
+        ):
+            bad = copy.deepcopy(case)
+            mutate(bad)
+            with self.subTest(case=bad), self.assertRaises(ValueError):
+                artifacts.validate_case(bad)
+
+    def test_cli_artifact_options_are_validated(self):
+        command = [sys.executable, str(ROOT / "evals/evaluate.py")]
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "r.json"
+            path.write_text("{}")
+            for args in (["--prompts", "--artifacts-dir", temp],
+                         ["--responses", str(path), "--artifacts-dir", temp, temp],
+                         ["--write-workspace", "implicit-phone-hero-missing", temp]):
+                self.assertEqual(subprocess.run(command + args, capture_output=True).returncode, 2, args)
+            workspace = Path(temp) / "ws"
+            listing = subprocess.run(command + ["--write-workspace", "author-edit-existing-manifest", str(workspace)],
+                                     capture_output=True, text=True)
+            self.assertEqual(listing.returncode, 0, listing.stderr)
+            self.assertIn("content/products/acrobat.xlsx", listing.stdout.split())
+            collected = subprocess.run(command + ["--collect", "author-edit-existing-manifest", str(workspace),
+                                                  str(Path(temp) / "arts")], capture_output=True, text=True)
+            self.assertEqual((collected.returncode, json.loads(collected.stdout)), (0, []), collected.stderr)
 
 
 if __name__ == "__main__":
