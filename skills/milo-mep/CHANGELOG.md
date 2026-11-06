@@ -6,6 +6,8 @@ runtime.)
 ## 2026-11-06
 
 **Skill release 1.1.10 — leaner entry point and evaluation tooling (unreleased candidate)**
+- Manifest authoring wording now notes that manifests can also be authored in
+  Adobe DA (da.live); Excel in SharePoint remains the primary editor.
 - Trimmed `SKILL.md`: condensed template, xlsx, linter, and source-authority
   text that duplicated the routing table or references, and moved
   maintainer-only snapshot refresh steps to the repository README. The

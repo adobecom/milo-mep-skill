@@ -1,7 +1,7 @@
 # milo-mep-skill
 
 An AI agent **skill** for **MEP — Milo Experiments and Personalization**: the
-Excel/JSON manifests that show, swap, hide, or replace content on **adobe.com**
+Excel/DA/JSON manifests that show, swap, hide, or replace content on **adobe.com**
 pages built on **Milo/EDS** — *without editing the page source*.
 
 The skill itself lives at [`skills/milo-mep/`](skills/milo-mep/) and follows the
@@ -24,7 +24,9 @@ use cases:
 - **Promotions** — time-boxed offers (Black Friday, etc.).
 - **A/B testing** — measured experiments, usually via Adobe Target.
 
-A manifest is authored in SharePoint/DA, published to JSON by EDS, and referenced
+A manifest is usually authored as an Excel file in SharePoint (its UI handles
+complex sheets best); it can also be authored in [Adobe DA](https://da.live/).
+It is published to JSON by EDS, and referenced
 from a page's `personalization` (and `target`) metadata. At runtime Milo parses
 the manifest and applies each row's action to the matching selector for the
 qualifying experience. See the public docs:
