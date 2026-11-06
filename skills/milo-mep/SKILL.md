@@ -4,7 +4,7 @@ metadata:
   version: "1.1.10"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
-  DA/Excel/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
+  Excel/DA/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
   personalization tags and audiences, device/browser/locale/login/entitlement/geo
   targeting, Milo A/B tests and promos, Adobe Target on Milo, personalization or
   target metadata, rendering/performance tradeoffs, ?mep previews, the MEP button,
@@ -23,7 +23,7 @@ runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 ## What MEP is
 
 MEP lets authors modify a Milo/EDS page — swap, add, hide, or replace content —
-**without editing the source page**, driven by a spreadsheet **manifest** that
+**without editing the source page**, driven by an Excel **manifest** that
 publishes to JSON and is applied at runtime in the browser. It powers three
 use cases:
 
@@ -32,10 +32,10 @@ use cases:
 - **Promotions** — time-boxed offers (Black Friday, etc.).
 - **A/B testing** — measured experiments, usually via Adobe Target.
 
-The manifest is a spreadsheet, nowadays usually authored in
-[Adobe DA](https://da.live/) (older manifests may be Excel files in
-SharePoint). It is published to JSON by EDS, and referenced from a page's `personalization` metadata (and `target`
-metadata when Adobe Target is involved). At runtime Milo parses the manifest
+The manifest is usually authored as an Excel file in SharePoint (its UI handles
+complex sheets best); it can also be authored in [Adobe DA](https://da.live/).
+It is published to JSON by EDS and referenced from a page's `personalization`
+metadata (and `target` metadata when Adobe Target is involved). At runtime Milo parses the manifest
 and applies each row's action to the matching selector for the qualifying
 experience.
 
@@ -63,7 +63,7 @@ Start here to orient, then follow the pointers.
 | Replace **M@S cards / CaaS / content in nested fragments** | `references/mas-caas-fragments.md` |
 | Need exact/edge-case behavior (the source of truth) | `references/source-notes.md`; grep `assets/source/personalization.js` |
 
-If the user is working against live files in DA (or SharePoint) and a suitable MCP
+If the user is working against live files in SharePoint/DA and a suitable MCP
 is available, use it to inspect content **read-only by default**; otherwise
 work from pasted xlsx content or the published `.json` (fetch the `.aem.live`
 URL — the `.aem.page` preview URL requires auth).
@@ -236,7 +236,7 @@ page") into concrete rows: set the manifest type, name the file per
 header(s) (rename/add columns beyond the default `all`). When the goal names a
 page, fill the row's `page filter (optional)` with that path (a blank filter
 applies on every page that loads the manifest). Also show it as a table
-the user can paste into DA or Excel, and state the filename and folder it lives in.
+the user can paste into Excel (or DA), and state the filename and folder it lives in.
 
 When the page already has personalization, follow *Answer checklist → Adding
 to existing personalization*.
