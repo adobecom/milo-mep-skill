@@ -319,6 +319,7 @@ def summarize(manifest, simulation):
             lines.append(head + result["error"])
             continue
         changes = [f"{e['action']} {e.get('matched') or e.get('error') or 'nothing'}" for e in _entries(result)]
+        changes += [f"{key} {g['selector']}={g['val']}" for key, items in result.get("global", {}).items() for g in items]
         lines.append(head + f"{result['experience']}; " + ("; ".join(changes) or "no changes"))
     return "\n".join(lines)
 

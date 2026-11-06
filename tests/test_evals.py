@@ -672,6 +672,21 @@ class AuthoringArtifactTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertFails(self.variant("author-signedin-phone-priority", path=path), "expected exactly one")
 
+    def test_devicetype_manifest_name_passes(self):
+        # conventions.md: <pagename>-devicetype.json is a rewrite-allowed manifest name.
+        for case_id in ("author-insert-tablet-section", "author-signedin-phone-priority"):
+            with self.subTest(case=case_id):
+                path = "content/cc-shared/fragments/products/photoshop/photoshop-devicetype.xlsx"
+                self.assertEqual(self.variant(case_id, path=path), [])
+
+    def test_summary_lists_metadata_updates(self):
+        case = self.by_id["author-gnav-metadata"]
+        with tempfile.TemporaryDirectory() as directory:
+            items = build_reference_artifact(case, directory)
+            failures, summary = artifacts.check(case, {"artifacts": items}, directory)
+        self.assertEqual(failures, [])
+        self.assertIn("updatemetadata gnav-source=", summary)
+
     def test_missing_changed_or_unlisted_files_fail(self):
         case = "author-signedin-phone-priority"
         self.assertFails(self.variant(case, response=lambda items: {}), "artifacts list missing")

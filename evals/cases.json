@@ -345,13 +345,13 @@
       "id": "author-signedin-phone-priority",
       "prompt": "On https://www.adobe.com/products/photoshop.html, signed-in visitors should see the marquee /cc-shared/fragments/products/photoshop/marquee-loggedin and signed-out phone visitors should see /cc-shared/fragments/products/photoshop/marquee-phone. A signed-in visitor on a phone gets the signed-in marquee. Everyone else keeps the current page. Build the manifest.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
       "activate": true,
-      "checks": ["photoshop\\.xlsx", "\\?mep|Highlight Changes", "personalization"],
+      "checks": ["photoshop(?:-devicetype)?\\.xlsx", "\\?mep|Highlight Changes", "personalization"],
       "reject": [],
-      "review": ["Writes one Personalization manifest named photoshop.xlsx in the page's folder or a cc-shared folder (not the content root), built from the template.", "Orders loggedin before phone so signed-in phone visitors get the signed-in marquee; signed-out desktop visitors get no change.", "Uses a selector that matches the marquee in the plain HTML and the two given fragment paths.", "Gives the personalization metadata pointing at the published .json and a QA step with the expected marquee per visitor (signed in, signed-out phone, signed-out desktop)."],
+      "review": ["Writes one Personalization manifest named photoshop.xlsx (or photoshop-devicetype.xlsx) in the page's folder or a cc-shared folder (not the content root), built from the template.", "Orders loggedin before phone so signed-in phone visitors get the signed-in marquee; signed-out desktop visitors get no change.", "Uses a selector that matches the marquee in the plain HTML and the two given fragment paths.", "Gives the personalization metadata pointing at the published .json and a QA step with the expected marquee per visitor (signed in, signed-out phone, signed-out desktop)."],
       "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/personalization-tags.md"],
       "workspace_files": [{"src": "evals/fixtures/authoring/pages/photoshop.html", "dest": "content/products/photoshop.html"}],
       "artifact": {
-        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/photoshop\\.xlsx",
+        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/photoshop(?:-devicetype)?\\.xlsx",
         "info": {
           "manifest-type": "personalization"
         },
@@ -577,7 +577,7 @@
       "split": "holdout",
       "prompt": "Black Friday: on every product's plans page (like /products/photoshop/plans.html or /fr/products/illustrator/plans.html), in every locale, replace the plans banner fragment (/cc-shared/fragments/plans/default-banner) with /cc-shared/fragments/promos/black-friday/plans-banner. Other pages also show the default banner and must not change.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
       "activate": true,
-      "checks": ["black-friday\\.xlsx", "regex|quantifier|wildcard|glob", "\\?mep|Highlight Changes"],
+      "checks": ["black-friday\\.xlsx", "\\?mep|Highlight Changes"],
       "reject": [],
       "review": ["Writes a Promo manifest black-friday.xlsx in its own promo folder (promos/.../black-friday/).", "Uses a page filter that matches plans pages for any product and locale (e.g. **/products/**/plans) and not other pages; single * is a regex quantifier, not a wildcard.", "Replaces the banner fragment by its path or by a selector that matches it in plain HTML, with the given promo fragment.", "QA names the expected banner on a US and a localized plans page and an unchanged non-plans page."],
       "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/personalization-tags.md"],
@@ -994,11 +994,11 @@
       "activate": true,
       "checks": ["insertAfter", "tablet", "\\?mep|Highlight Changes"],
       "reject": [],
-      "review": ["Writes a Personalization manifest photoshop.xlsx in the page's folder or a cc-shared folder.", "Inserts the given fragment between the marquee section and the next section (insertAfter section1/marquee or insertBefore section2) in a tablet column.", "QA names the expected extra section on a tablet and none on phone and desktop."],
+      "review": ["Writes a Personalization manifest photoshop.xlsx (or photoshop-devicetype.xlsx) in the page's folder or a cc-shared folder.", "Inserts the given fragment between the marquee section and the next section (insertAfter section1/marquee or insertBefore section2) in a tablet column.", "QA names the expected extra section on a tablet and none on phone and desktop."],
       "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/actions.md", "skills/milo-mep/references/selectors.md"],
       "workspace_files": [{"src": "evals/fixtures/authoring/pages/photoshop.html", "dest": "content/products/photoshop.html"}],
       "artifact": {
-        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/photoshop\\.xlsx",
+        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/photoshop(?:-devicetype)?\\.xlsx",
         "info": {
           "manifest-type": "personalization"
         },

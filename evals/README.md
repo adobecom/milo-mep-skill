@@ -132,6 +132,13 @@ each one:
 2. Run the prompt there with file **write** and shell tools limited to that
    workspace, so the agent can use `scripts/mep_xlsx.py`. Do not give it the
    grader, fixtures directory, or specs.
+   - Writer tool names depend on the model: some get `create`/`edit`, others
+     `apply_patch`. Check one trace per model before a full run.
+   - CLI path verification is not a read sandbox (a `python3 -c "open(...)"`
+     can still read outside the workspace). Audit every shell command and file
+     path in each trace; discard runs that read outside the workspace.
+   - The CLI's own per-session scratch folder
+     (`$COPILOT_HOME/session-state/<id>/files/`) is allowed for scratch files.
 3. Collect what the agent created or changed (agent config directories and
    unchanged seed files are ignored):
    `python3 evals/evaluate.py --collect CASE_ID /session-only/ws /session-only/artifacts`.
