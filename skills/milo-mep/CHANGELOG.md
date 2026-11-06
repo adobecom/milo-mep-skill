@@ -5,7 +5,7 @@ runtime.)
 
 ## 2026-11-06
 
-**Skill release 1.1.10 — leaner entry point and evaluation tooling (unreleased candidate)**
+**Skill release 1.1.10 — leaner entry point and evaluation tooling (validated)**
 - Manifest authoring wording now notes that manifests can also be authored in
   Adobe DA (da.live); Excel in SharePoint remains the primary editor.
 - Trimmed `SKILL.md`: condensed template, xlsx, linter, and source-authority
@@ -39,7 +39,18 @@ runtime.)
 - From the first full runs: the promo checklist item states that a blank
   schedule bound is open-ended (not disabled), and authoring guidance fills
   the row's page filter when the goal names a page.
-- Fresh cross-model behavioral evaluation remains required before distribution.
+- Validated with fresh runs of all 33 cases on candidate `3b60cd0` (Copilot CLI
+  1.0.106, medium effort), graded with `3b60cd0` and `--da-audit`.
+  GPT-6.1 Sol: 33/33 on activation, automatic, correctness, and completeness,
+  with four quote-backed check waivers for paraphrases (fragment-lifecycle
+  unique selector, row-country comparison, page-filter whole-path match, and
+  postlcp first-section exclusion).
+  Claude Opus 5.5: 33/33 on activation, correctness, and completeness, and
+  32/33 automatic. On `heldout-forced-preview-gates` the unwaivable reject
+  pattern matched "a forced preview proves the selector and fragment work". In
+  context the claim was scoped correctly: the next sentence says preview does
+  not show what real visitors get. The failure was accepted as a wording slip,
+  and the grader was not changed after the run.
 
 ## 2026-11-05
 
