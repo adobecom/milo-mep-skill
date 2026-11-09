@@ -11,7 +11,7 @@ CLI
     python mep_xlsx.py read <manifest.xlsx|manifest.json>
 
     # build a manifest from the bundled template + a spec, write a new xlsx
-    python mep_xlsx.py write --out new-manifest.xlsx --spec spec.json
+    python mep_xlsx.py write --out new-manifest.xlsx --spec spec.json   # or --spec - (stdin)
         # optional: --template path/to/other-template.xlsx
 
 spec.json shape (all keys optional):
@@ -510,6 +510,13 @@ def edit_manifest(in_path, out_path, spec):
 
 # --------------------------------- CLI ----------------------------------
 
+def _load_spec(path):
+    if path == "-":
+        return json.load(sys.stdin)
+    with open(path) as f:
+        return json.load(f)
+
+
 def _main(argv):
     if not argv or argv[0] not in ("read", "write", "edit"):
         print(__doc__)
@@ -522,10 +529,9 @@ def _main(argv):
         p = argparse.ArgumentParser(prog="mep_xlsx.py edit")
         p.add_argument("manifest", help="existing manifest .xlsx")
         p.add_argument("--out", required=True, help="output path (may equal the input)")
-        p.add_argument("--spec", required=True, help="Path to edit spec JSON")
+        p.add_argument("--spec", required=True, help="Path to edit spec JSON, or - for stdin")
         args = p.parse_args(argv[1:])
-        with open(args.spec) as f:
-            spec = json.load(f)
+        spec = _load_spec(args.spec)
         try:
             edit_manifest(args.manifest, args.out, spec)
         except ValueError as error:
@@ -537,10 +543,9 @@ def _main(argv):
     p = argparse.ArgumentParser(prog="mep_xlsx.py write")
     p.add_argument("--out", required=True)
     p.add_argument("--template", default=_DEFAULT_TEMPLATE)
-    p.add_argument("--spec", required=True, help="Path to spec JSON")
+    p.add_argument("--spec", required=True, help="Path to spec JSON, or - for stdin")
     args = p.parse_args(argv[1:])
-    with open(args.spec) as f:
-        spec = json.load(f)
+    spec = _load_spec(args.spec)
     write_manifest(args.out, template_path=args.template,
                    info=spec.get("info"), experiences=spec.get("experiences"),
                    placeholders=spec.get("placeholders"))

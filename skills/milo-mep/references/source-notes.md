@@ -287,7 +287,9 @@ Promos are scheduled via metadata, not just a manifest reference:
   `name|start|end|manifestPath|locales|cdtStart|cdtEnd` (GMT dates).
 - Regions are `APAC`, `EMEA`, `AMERICAS`, `JP` (locale lists in the file).
 - A promo is disabled outside its `start`/`end` window or its `locales`.
-  `?instant=<date>` overrides "now" for testing. The start and end are
+  `?instant=<date>` overrides "now" for testing. It is parsed with plain
+  `new Date(instant)`, so a value without `Z` or an offset is browser local
+  time while the bounds are GMT: use `?instant=<date>Z`. The start and end are
   inclusive (`isDisabled` checks `current < start || current > end`).
 - `getRegionalPromoManifests` always wraps `start`/`end` with
   `GMTStringToLocalDate`, so a blank bound becomes an Invalid Date (still

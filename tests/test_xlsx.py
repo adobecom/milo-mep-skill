@@ -111,6 +111,15 @@ class XlsxTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("readme", read_manifest(self.output))
 
+    def test_cli_reads_spec_from_stdin(self):
+        result = subprocess.run([sys.executable, str(SCRIPTS / "mep_xlsx.py"), "write",
+                                 "--out", str(self.output), "--spec", "-"],
+                                input=json.dumps({"experiences": {"columns": self.columns, "rows": self.rows}}),
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(read_manifest(self.output)["helix-experiences"]["rows"][0]["action"],
+                         self.rows[0]["action"])
+
     def test_vendored_reader_works_without_site_packages(self):
         self.write()
         result = subprocess.run([sys.executable, "-S", str(SCRIPTS / "mep_xlsx.py"),

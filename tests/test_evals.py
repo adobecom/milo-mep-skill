@@ -413,7 +413,7 @@ class EvalTests(unittest.TestCase):
             "heldout-row-country-filter": "Yes. manifest-country-restriction applies to one row; set jp, spoof with ?mep.",
             "heldout-page-filter-single-star": "It is a regex anchored to the full path, but the locale prefix is "
                                                "stripped before matching /br/ pages; check ?mep.",
-            "heldout-promo-instant-timezone": "Use ?instant=2026-11-27T00:00:00Z. The instant value is always "
+            "promo-instant-timezone": "Use ?instant=2026-11-27T00:00:00Z. The instant value is always "
                                               "treated as GMT, never local time zone, so you were before the start.",
             "heldout-postlcp-first-section": "postlcp can still change the first section marquee; skip nothing. "
                                              "Set target on or move it below; LCP; check ?mep.",

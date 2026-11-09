@@ -320,8 +320,7 @@
       "reference_answer": "Neither URL matches because a single * is not a wildcard in a MEP page filter. Milo only turns ** into .* and then tests the whole pathname as an anchored, case-insensitive regex. In /example/products/* the lone * is a regex quantifier (zero or more slashes), so it matches only /example/products and /example/products/. The pathname also includes the locale prefix, so /br/example/products fails at the start of the path.\n\nFix:\n\n| page filter (optional) |\n|---|\n| **/example/products(/**)? |\n\nThat matches /example/products, /example/products/photo, /br/example/products and /br/example/products/photo.html. Use **/example/products/** only if the landing page itself should be excluded.\n\nVerify on /example/products/photo?mep and /br/example/products?mep: Highlight Changes shows the row's change on both, and an unrelated page such as /example/pricing stays unchanged."
     },
     {
-      "id": "heldout-promo-instant-timezone",
-      "split": "holdout",
+      "id": "promo-instant-timezone",
       "prompt": "Our Milo Black Friday promo schedule starts at 2026-11-27T00:00:00 GMT. I tried previewing /example/sale with ?instant=2026-11-27T00:00:00 from our Tokyo office, and it still shows the old page. How do I preview the exact start?",
       "activate": true,
       "checks": ["instant=2026-11-27T00:00(?::00)?(?:\\.000)?(?:Z|%2B00:?00)", "local|time ?zone", "GMT|UTC", "before"],

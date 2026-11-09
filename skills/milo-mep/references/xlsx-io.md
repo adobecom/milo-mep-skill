@@ -31,6 +31,9 @@ python scripts/mep_xlsx.py write --out new-manifest.xlsx --spec spec.json
 # optional: --template <other-template.xlsx>  (defaults to the bundled one)
 ```
 
+Keep the spec file in your working folder (not `/tmp`), or pipe it in with
+`--spec -` (for example a heredoc), and delete scratch specs afterwards.
+
 `spec.json` (all keys optional):
 
 ```json

@@ -138,7 +138,10 @@ each one:
      can still read outside the workspace). Audit every shell command and file
      path in each trace; discard runs that read outside the workspace.
    - The CLI's own per-session scratch folder
-     (`$COPILOT_HOME/session-state/<id>/files/`) is allowed for scratch files.
+     (`$COPILOT_HOME/session-state/<id>/files/`) is allowed for scratch files,
+     and so are the CLI's own tool-output spill files in `$TMPDIR`.
+   - Reasoning effort is recorded in
+     `$COPILOT_HOME/session-state/*/events.jsonl`, not in the JSON trace.
 3. Collect what the agent created or changed (agent config directories and
    unchanged seed files are ignored):
    `python3 evals/evaluate.py --collect CASE_ID /session-only/ws /session-only/artifacts`.
