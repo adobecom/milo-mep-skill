@@ -143,11 +143,16 @@ each one:
    - Reasoning effort is recorded in
      `$COPILOT_HOME/session-state/*/events.jsonl`, not in the JSON trace.
    - Pin the CLI for the whole evaluation (`--no-auto-update`,
-     `COPILOT_AUTO_UPDATE=false`) and check the CLI version in every trace; a
-     mid-run update invalidates the batch.
+     `COPILOT_AUTO_UPDATE=false`), assert the version before each case, and
+     check it in every trace; a mid-run update invalidates the batch.
+   - A tool call outside the workspace that the CLI **denied** and that
+     returned nothing does not contaminate the run; record it as a reviewed
+     exception. Any successful outside read (other than the allowed scratch
+     and spill files) does.
    - For the authoring-first stop rule, grade the partial capture with
      `--responses r1-authoring.json --artifacts-dir arts --case ID ...`. The
-     output is marked `partial_cases` and is not a release gate.
+     output is marked `partial_cases` and is not a release gate; like a full
+     grade it exits 1 until manual reviews are recorded.
 3. Collect what the agent created or changed (agent config directories and
    unchanged seed files are ignored):
    `python3 evals/evaluate.py --collect CASE_ID /session-only/ws /session-only/artifacts`.
