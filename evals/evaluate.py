@@ -306,6 +306,8 @@ def main():
                       help="create a case's answering workspace (neutral fixture plus stripped case files)")
     mode.add_argument("--collect", nargs=3, metavar=("CASE", "WORKSPACE", "ARTIFACTS_DIR"),
                       help="copy files an answer created/changed into ARTIFACTS_DIR/CASE; print the capture list")
+    parser.add_argument("--case", nargs="+", metavar="ID",
+                        help="with --responses, grade only these cases (partial runs, e.g. authoring-first); not a release gate")
     parser.add_argument("--artifacts-dir", type=Path, nargs="+",
                         help="collected artifact directory per capture, in the same order; required for authoring cases")
     parser.add_argument("--da-audit", type=Path, nargs="+",
@@ -319,6 +321,13 @@ def main():
         cases = load_cases()
         if args.evaluated_skill_version is not None and not args.responses:
             raise ValueError("--evaluated-skill-version requires --responses")
+        if args.case is not None:
+            if not args.responses:
+                raise ValueError("--case requires --responses")
+            unknown = sorted(set(args.case) - {c["id"] for c in cases})
+            if unknown:
+                raise ValueError(f"unknown cases: {unknown}")
+            cases = [c for c in cases if c["id"] in set(args.case)]
         if args.da_audit is not None and not args.responses:
             raise ValueError("--da-audit requires --responses")
         if args.artifacts_dir is not None and not (args.responses or args.judge_prompts):
@@ -361,11 +370,12 @@ def main():
         reports = [grade(cases, json.loads(p.read_text()),
                          evaluated_skill_version=args.evaluated_skill_version, da_audit=audit, artifacts_dir=d)
                    for p, audit, d in zip(args.responses, audits, dirs)]
+        partial = {"partial_cases": sorted(args.case)} if args.case else {}
         if len(reports) == 1:
-            print(json.dumps(reports[0], indent=2))
+            print(json.dumps({**partial, **reports[0]}, indent=2))
             return 0 if reports[0]["passed"] else 1
         summary = aggregate(reports, args.min_pass_rate)
-        print(json.dumps({"aggregate": summary, "runs": reports}, indent=2))
+        print(json.dumps({**partial, "aggregate": summary, "runs": reports}, indent=2))
         return 0 if summary["passed"] else 1
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"Error: {error}", file=sys.stderr)

@@ -160,8 +160,10 @@ these for every response:
   inside the window plus one just outside it. Outside its schedule (or
   `locales`), a promo manifest loads as Default unless its experience is
   forced with `?mep`, so check bounds unforced. Schedule bounds are GMT, but
-  `?instant` without `Z` or an offset is browser local time, so write
-  `?instant=2026-11-26T23:59:59Z`. Bounds are inclusive; a blank
+  `?instant` without `Z` is browser local time, so write
+  `?instant=2026-11-26T23:59:59Z`. Use `Z`, not `+hh:mm`: an unencoded `+`
+  becomes a space, the date is invalid, and the promo shows at any instant
+  (encode it as `%2B` if you need an offset). Bounds are inclusive; a blank
   schedule `start` or `end` leaves that side open-ended rather than disabling
   the promo (see `references/source-notes.md` → *Promos*).
 - **Native audiences.** When a new experience needs no Target, say **no Target

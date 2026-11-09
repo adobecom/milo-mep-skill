@@ -142,6 +142,12 @@ each one:
      and so are the CLI's own tool-output spill files in `$TMPDIR`.
    - Reasoning effort is recorded in
      `$COPILOT_HOME/session-state/*/events.jsonl`, not in the JSON trace.
+   - Pin the CLI for the whole evaluation (`--no-auto-update`,
+     `COPILOT_AUTO_UPDATE=false`) and check the CLI version in every trace; a
+     mid-run update invalidates the batch.
+   - For the authoring-first stop rule, grade the partial capture with
+     `--responses r1-authoring.json --artifacts-dir arts --case ID ...`. The
+     output is marked `partial_cases` and is not a release gate.
 3. Collect what the agent created or changed (agent config directories and
    unchanged seed files are ignored):
    `python3 evals/evaluate.py --collect CASE_ID /session-only/ws /session-only/artifacts`.

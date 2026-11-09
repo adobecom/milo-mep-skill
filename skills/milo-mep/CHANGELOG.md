@@ -28,7 +28,9 @@ runtime.)
   Its selector engine was cross-checked against Chrome.
 - Promo QA guidance: schedule bounds are GMT, but `?instant` without `Z` or an
   offset is browser local time, so examples now end in `Z` (SKILL.md,
-  `source-notes.md`, `mep-button.md`). The former held-out timezone case is
+  `source-notes.md`, `mep-button.md`). An offset must be written `%2B`: a raw
+  `+` decodes to a space, giving an invalid date that leaves the promo on at
+  any instant. The former held-out timezone case is
   now a regular case (`promo-instant-timezone`) because the skill teaches it.
 - `mep_xlsx.py write`/`edit` accept `--spec -` (stdin), and `xlsx-io.md` asks
   agents to keep spec files in the working folder instead of `/tmp`.

@@ -211,7 +211,7 @@
       "prompt": "In our manifest, the row `remove | .legal-disclaimer` has `flase` in the phone column and the all column is blank. Phone visitors lose the disclaimer, but we meant to keep it. What happened?",
       "activate": true,
       "checks": ["(?:typo|misspell|flase)", "(?:anything|any (?:other )?(?:non.?blank )?value|other than)[^\\n]{0,60}(?:false|remov)|(?:only|exact(?:ly)?)[^\\n]{0,30}(?:blank|false)", "(?:blank|empty)", "(?:Highlight Changes|\\?mep)"],
-      "reject": ["flase (?:is|counts as|means) (?:treated as )?false", "\\bblank (?:cells? )?(?:also )?removes?\\b"],
+      "reject": ["flase (?:is|counts as|means) (?:treated as )?false", "(?<!non-)\\bblank (?:cells? )?(?:also )?removes?\\b"],
       "review": ["remove skips only blank or exact false; any other value, including the typo flase, removes.", "Fix the phone cell to blank (or exactly false); the blank all cell already leaves other visitors unchanged.", "Verify phone in ?mep that .legal-disclaimer remains; state that the selector matches plain HTML and must match exactly the intended element."],
       "evidence": ["skills/milo-mep/references/actions.md", "skills/milo-mep/assets/source/personalization.js"],
       "reference_answer": "flase is a typo. remove skips only a blank cell or exactly false; anything other than false removes the element. Leave the phone cell blank (or write false). The selector .legal-disclaimer matches plain HTML; confirm it matches exactly the one intended element. Verify with ?mep, phone selected, and Highlight Changes that the disclaimer is still on the page."

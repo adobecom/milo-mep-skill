@@ -10,7 +10,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evals"))
 import artifacts
-from evaluate import grade as grade_capture, load_cases
+from evaluate import grade as grade_capture, load_cases, normalize_text
 
 sys.path.insert(0, str(ROOT / "skills/milo-mep/scripts"))
 from mep_xlsx import edit_manifest, write_manifest
@@ -494,6 +494,28 @@ class EvalTests(unittest.TestCase):
                 path.write_text(json.dumps(capture))
                 result = subprocess.run(command + ["--responses", str(path)], capture_output=True, text=True)
                 self.assertEqual(result.returncode, expected, result.stderr)
+
+    def test_cli_grades_partial_case_subset(self):
+        command = [sys.executable, str(ROOT / "evals/evaluate.py")]
+        authoring = sorted(c["id"] for c in self.cases if "artifact" in c)
+        subset = {**self.capture, "responses": [r for r in self.capture["responses"] if r["id"] in authoring]}
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "partial.json"
+            path.write_text(json.dumps(subset))
+            result = subprocess.run(command + ["--responses", str(path), "--artifacts-dir", ARTIFACTS.name,
+                                               "--case", *authoring], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["partial_cases"], authoring)
+            self.assertEqual(subprocess.run(command + ["--responses", str(path), "--case", "nope"],
+                                            capture_output=True).returncode, 2)
+            self.assertEqual(subprocess.run(command + ["--prompts", "--case", authoring[0]],
+                                            capture_output=True).returncode, 2)
+
+    def test_non_blank_remove_is_not_rejected(self):
+        case = next(c for c in self.cases if c["id"] == "heldout-remove-typo")
+        text = normalize_text("A non-blank remove value hides the element.")
+        self.assertFalse(any(re.search(p, text, re.I) for p in case["reject"]))
+        self.assertTrue(any(re.search(p, normalize_text("A blank cell removes it."), re.I) for p in case["reject"]))
 
     def test_answering_workspace_fixture_is_neutral(self):
         workspace = ROOT / "evals/workspace"
