@@ -3,9 +3,9 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
-## 2026-11-09
+## 2026-11-10
 
-**Skill release 1.1.11 — manifest editing and authoring evaluations (unreleased candidate)**
+**Skill release 1.1.11 — manifest editing and authoring evaluations (validated)**
 - `mep_xlsx.py edit` changes an existing workbook in place from a JSON spec
   (info values; experiences/placeholders `add_columns`, `update`, `delete`,
   `append` by row match). Unrelated rows, sheets, the readme, styles, and
@@ -34,7 +34,19 @@ runtime.)
   now a regular case (`promo-instant-timezone`) because the skill teaches it.
 - `mep_xlsx.py write`/`edit` accept `--spec -` (stdin), and `xlsx-io.md` asks
   agents to keep spec files in the working folder instead of `/tmp`.
-- Fresh cross-model behavioral evaluation remains required before distribution.
+- Validated with fresh runs of all 41 cases, three runs each, on candidate
+  `7a043f2` (medium effort), graded with `--da-audit` and `--artifacts-dir`
+  at a minimum pass rate of 1.0. GPT-6.1 Sol (Copilot CLI 1.0.106): 41/41 in
+  every run on activation, automatic, correctness, and completeness, with two
+  quote-backed check waivers for paraphrases (postlcp first-section
+  exclusion). Claude Opus 5.5 (Copilot CLI 1.0.108): 41/41 in every run, with
+  nine quote-backed check waivers for paraphrases. All 24 authoring artifacts
+  passed for each model, with no rejects and no contaminated runs. Earlier
+  candidates `1f1ed4a` and `23e5a60` were superseded by the `?instant` fixes
+  above.
+- After validation, the branch merged `main`, which brought in the 1.1.10 DA
+  authoring wording (validated in the 1.1.10 runs). The edits touch different
+  `SKILL.md` text, so the merged tree was not re-evaluated.
 
 ## 2026-11-06
 
