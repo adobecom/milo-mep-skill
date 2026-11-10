@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.10"
+  version: "1.1.11"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/DA/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.10.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.11.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -58,7 +58,7 @@ Start here to orient, then follow the pointers.
 | Explain the **MEP button** / `?mep` preview (what it does + how it works) | `references/mep-button.md` |
 | Want a worked, real example | `references/example-manifest.md` |
 | Want compact synthetic patterns | `references/synthetic-examples.md` (native personalization, manifest conflicts, localization failure) |
-| Read/write a manifest **.xlsx** file | `scripts/mep_xlsx.py` (see `references/xlsx-io.md`) |
+| Read/write/edit a manifest **.xlsx** file | `scripts/mep_xlsx.py` (see `references/xlsx-io.md`) |
 | **Validate / lint** a manifest | published `.json`: `node scripts/lint.mjs <file\|URL>` (add `--check-links` to verify fragment paths) or open `scripts/lint.html`; `.xlsx`: `python scripts/lint_manifest.py <file>`. See `references/linting.md`. |
 | Replace **M@S cards / CaaS / content in nested fragments** | `references/mas-caas-fragments.md` |
 | Need exact/edge-case behavior (the source of truth) | `references/source-notes.md`; grep `assets/source/personalization.js` |
@@ -92,8 +92,8 @@ URL — the `.aem.page` preview URL requires auth).
   alone is not a reason to republish; publication-state checks are read-only,
   while republishing is a separate, explicitly authorized remediation.
 
-**Manifest `.xlsx` files:** use `scripts/mep_xlsx.py` (`read`/`write`; no
-install needed). Don't hand-parse xlsx: empty cells shift columns.
+**Manifest `.xlsx` files:** use `scripts/mep_xlsx.py` (`read`/`write`/`edit`;
+no install needed). Don't hand-parse xlsx: empty cells shift columns.
 
 ## Response style (all tasks)
 
@@ -160,7 +160,11 @@ these for every response:
   and one that should not: the intended pages plus an unrelated page; a time
   inside the window plus one just outside it. Outside its schedule (or
   `locales`), a promo manifest loads as Default unless its experience is
-  forced with `?mep`, so check bounds unforced. Bounds are inclusive; a blank
+  forced with `?mep`, so check bounds unforced. Schedule bounds are GMT, but
+  `?instant` without `Z` is browser local time, so write
+  `?instant=2026-11-26T23:59:59Z`. Use `Z`, not `+hh:mm`: an unencoded `+`
+  becomes a space, the date is invalid, and the promo shows at any instant
+  (encode it as `%2B` if you need an offset). Bounds are inclusive; a blank
   schedule `start` or `end` leaves that side open-ended rather than disabling
   the promo (see `references/source-notes.md` → *Promos*).
 - **Native audiences.** When a new experience needs no Target, say **no Target
@@ -227,7 +231,8 @@ Never flag fragment-URL domains (they're normalized — see `selectors.md`).
 **Start from the official template** at `assets/mep-manifest-template.xlsx`
 (default `manifest-type` is `Promo`; one default `all` experience column) and
 **keep its `readme` tab**. Write real files with `scripts/mep_xlsx.py write`,
-never from scratch. See `references/xlsx-io.md`.
+never from scratch; change an existing workbook with `mep_xlsx.py edit` so
+unrelated rows survive. Lint the file you wrote. See `references/xlsx-io.md`.
 
 Turn a goal ("A/B test the hero CTA for logged-in users on the US Photoshop
 page") into concrete rows: set the manifest type, name the file per

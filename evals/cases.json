@@ -211,7 +211,7 @@
       "prompt": "In our manifest, the row `remove | .legal-disclaimer` has `flase` in the phone column and the all column is blank. Phone visitors lose the disclaimer, but we meant to keep it. What happened?",
       "activate": true,
       "checks": ["(?:typo|misspell|flase)", "(?:anything|any (?:other )?(?:non.?blank )?value|other than)[^\\n]{0,60}(?:false|remov)|(?:only|exact(?:ly)?)[^\\n]{0,30}(?:blank|false)", "(?:blank|empty)", "(?:Highlight Changes|\\?mep)"],
-      "reject": ["flase (?:is|counts as|means) (?:treated as )?false", "\\bblank (?:cells? )?(?:also )?removes?\\b"],
+      "reject": ["flase (?:is|counts as|means) (?:treated as )?false", "(?<!non-)\\bblank (?:cells? )?(?:also )?removes?\\b"],
       "review": ["remove skips only blank or exact false; any other value, including the typo flase, removes.", "Fix the phone cell to blank (or exactly false); the blank all cell already leaves other visitors unchanged.", "Verify phone in ?mep that .legal-disclaimer remains; state that the selector matches plain HTML and must match exactly the intended element."],
       "evidence": ["skills/milo-mep/references/actions.md", "skills/milo-mep/assets/source/personalization.js"],
       "reference_answer": "flase is a typo. remove skips only a blank cell or exactly false; anything other than false removes the element. Leave the phone cell blank (or write false). The selector .legal-disclaimer matches plain HTML; confirm it matches exactly the one intended element. Verify with ?mep, phone selected, and Highlight Changes that the disclaimer is still on the page."
@@ -320,8 +320,7 @@
       "reference_answer": "Neither URL matches because a single * is not a wildcard in a MEP page filter. Milo only turns ** into .* and then tests the whole pathname as an anchored, case-insensitive regex. In /example/products/* the lone * is a regex quantifier (zero or more slashes), so it matches only /example/products and /example/products/. The pathname also includes the locale prefix, so /br/example/products fails at the start of the path.\n\nFix:\n\n| page filter (optional) |\n|---|\n| **/example/products(/**)? |\n\nThat matches /example/products, /example/products/photo, /br/example/products and /br/example/products/photo.html. Use **/example/products/** only if the landing page itself should be excluded.\n\nVerify on /example/products/photo?mep and /br/example/products?mep: Highlight Changes shows the row's change on both, and an unrelated page such as /example/pricing stays unchanged."
     },
     {
-      "id": "heldout-promo-instant-timezone",
-      "split": "holdout",
+      "id": "promo-instant-timezone",
       "prompt": "Our Milo Black Friday promo schedule starts at 2026-11-27T00:00:00 GMT. I tried previewing /example/sale with ?instant=2026-11-27T00:00:00 from our Tokyo office, and it still shows the old page. How do I preview the exact start?",
       "activate": true,
       "checks": ["instant=2026-11-27T00:00(?::00)?(?:\\.000)?(?:Z|%2B00:?00)", "local|time ?zone", "GMT|UTC", "before"],
@@ -340,6 +339,759 @@
       "review": ["Explains that postlcp applies Target-delivered manifests after the LCP section loads, and Milo skips commands whose element is inside the first section (and skips replacePage).", "Options: target on (blocks rendering until Target responds; performance cost), or move the change below the first section; optionally a metadata-listed MEP manifest when the audience is native, not a Target segment.", "Does not claim a longer Target timeout fixes it.", "Verifies the marquee swap with the activity's experience after the change, using ?mep and Highlight Changes."],
       "evidence": ["skills/milo-mep/references/enable-and-qa.md", "skills/milo-mep/references/source-notes.md", "skills/milo-mep/assets/source/personalization.js"],
       "reference_answer": "With target set to postlcp, Milo applies Target-delivered manifests only after the first (LCP) section has loaded, and it skips every command whose element is inside the first section. It also skips replacePage. So the marquee swap never applies, while below-the-fold rows still do. A longer Target timeout does not change this.\n\nOptions:\n- Set target to on for this page. Target can then change the first section, but page rendering waits for Target, which costs LCP performance.\n- Move the tested change below the first section and keep postlcp.\n- If the audience is native (device, locale, sign-in and similar), deliver the marquee change in a metadata-listed MEP manifest instead, which applies before LCP.\n\nVerify after the change: open /example/hub?mep, select the activity's experience, and use Highlight Changes to confirm the first-section marquee shows the variant."
+    },
+    {
+      "id": "author-signedin-phone-priority",
+      "prompt": "On https://www.adobe.com/products/photoshop.html, signed-in visitors should see the marquee /cc-shared/fragments/products/photoshop/marquee-loggedin and signed-out phone visitors should see /cc-shared/fragments/products/photoshop/marquee-phone. A signed-in visitor on a phone gets the signed-in marquee. Everyone else keeps the current page. Build the manifest.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["photoshop(?:-devicetype)?\\.xlsx", "\\?mep|Highlight Changes", "personalization"],
+      "reject": [],
+      "review": ["Writes one Personalization manifest named photoshop.xlsx (or photoshop-devicetype.xlsx) in the page's folder or a cc-shared folder (not the content root), built from the template.", "Orders loggedin before phone so signed-in phone visitors get the signed-in marquee; signed-out desktop visitors get no change.", "Uses a selector that matches the marquee in the plain HTML and the two given fragment paths.", "Gives the personalization metadata pointing at the published .json and a QA step with the expected marquee per visitor (signed in, signed-out phone, signed-out desktop)."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/personalization-tags.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/photoshop.html", "dest": "content/products/photoshop.html"}],
+      "artifact": {
+        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/photoshop(?:-devicetype)?\\.xlsx",
+        "info": {
+          "manifest-type": "personalization"
+        },
+        "columns": "loggedin \\| (?:loggedout ?& ?)?phone",
+        "simulate": {
+          "spec": "evals/fixtures/authoring/signedin-phone.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "signed-in-desktop",
+              "experience": "loggedin",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "marquee",
+                    "section1"
+                  ],
+                  "content": "/cc-shared/fragments/products/photoshop/marquee-loggedin$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "signed-in-phone",
+              "experience": "loggedin",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "marquee",
+                    "section1"
+                  ],
+                  "content": "/marquee-loggedin$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "signed-out-phone",
+              "experience": "(?:loggedout ?& ?)?phone",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "marquee",
+                    "section1"
+                  ],
+                  "content": "/cc-shared/fragments/products/photoshop/marquee-phone$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "signed-out-desktop",
+              "experience": "default"
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/products/photoshop.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Personalization",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "loggedin",
+              "phone"
+            ],
+            "rows": [
+              {
+                "action": "replace",
+                "selector": "any-marquee",
+                "page filter (optional)": "/products/photoshop",
+                "loggedin": "/cc-shared/fragments/products/photoshop/marquee-loggedin",
+                "phone": "/cc-shared/fragments/products/photoshop/marquee-phone"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/products/photoshop.xlsx (manifest-type Personalization). Columns: loggedin, then phone, so a signed-in phone visitor qualifies for loggedin first. Row: replace | any-marquee | /products/photoshop | /cc-shared/fragments/products/photoshop/marquee-loggedin | /cc-shared/fragments/products/photoshop/marquee-phone. Selectors match the plain authored HTML. Page metadata: personalization = /products/photoshop.json. QA: open the page with ?mep, pick loggedin and phone in the MEP button with Highlight Changes; signed-in desktop shows marquee-loggedin, a signed-out phone shows marquee-phone, signed-out desktop shows the current marquee."
+    },
+    {
+      "id": "author-locale-placeholders",
+      "prompt": "For our spring-sale promo, the marquee's primary CTA text on https://www.adobe.com/products/photoshop.html and its localized pages should read 'Save 20% today' in English, '\u00c9conomisez 20 % aujourd\u2019hui' on /fr/ pages and '\u4eca\u306a\u308920%\u30aa\u30d5' on /jp/ pages. Every other locale gets the English text. Keep the CTA link itself unchanged. Use one manifest.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["spring-sale\\.xlsx", "placeholder|page filter", "\\?mep|Highlight Changes"],
+      "reject": [],
+      "review": ["Writes one Promo manifest spring-sale.xlsx in a promo folder (promos/.../spring-sale/), not one manifest per locale.", "Changes only the CTA text (link kept) on every locale page, with French and Japanese text on /fr/ and /jp/ and English elsewhere.", "If it uses placeholders, the locale columns win over the default value column for /fr/ and /jp/ (header match order).", "Gives a QA step naming the expected CTA text on the US, /fr/ and /jp/ pages."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/manifest-schema.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/photoshop.html", "dest": "content/products/photoshop.html"}, {"src": "evals/fixtures/authoring/pages/fr-photoshop.html", "dest": "content/fr/products/photoshop.html"}, {"src": "evals/fixtures/authoring/pages/jp-photoshop.html", "dest": "content/jp/products/photoshop.html"}],
+      "artifact": {
+        "path": "content/(?:[a-z0-9-]+/)*promos/(?:[a-z0-9_-]+/)?spring-sale/spring-sale\\.xlsx",
+        "info": {
+          "manifest-type": "promo"
+        },
+        "simulate": {
+          "spec": "evals/fixtures/authoring/locale-placeholders.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": "hero-cta",
+                  "content": "^\\s*Save 20% today\\s*$"
+                }
+              ],
+              "unchanged": [
+                "marquee",
+                "section1",
+                "hero-heading"
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/fr/products/photoshop.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": "hero-cta",
+                  "content": "^\\s*\u00c9conomisez 20 % aujourd\u2019hui\\s*$"
+                }
+              ],
+              "unchanged": [
+                "marquee",
+                "section1",
+                "hero-heading"
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/jp/products/photoshop.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": "hero-cta",
+                  "content": "^\\s*\u4eca\u306a\u308920%\u30aa\u30d5\\s*$"
+                }
+              ],
+              "unchanged": [
+                "marquee",
+                "section1",
+                "hero-heading"
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/de/products/photoshop.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": "hero-cta",
+                  "content": "^\\s*Save 20% today\\s*$"
+                }
+              ],
+              "unchanged": [
+                "marquee",
+                "section1",
+                "hero-heading"
+              ]
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/cc-shared/fragments/promos/spring-sale/spring-sale.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Promo",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "all"
+            ],
+            "rows": [
+              {
+                "action": "replace",
+                "selector": "any-marquee primary-cta",
+                "page filter (optional)": "**/products/photoshop",
+                "all": "{{spring-cta}}"
+              }
+            ]
+          },
+          "placeholders": {
+            "columns": [
+              "key",
+              "fr",
+              "jp",
+              "value"
+            ],
+            "rows": [
+              {
+                "key": "spring-cta",
+                "fr": "\u00c9conomisez 20 % aujourd\u2019hui",
+                "jp": "\u4eca\u306a\u308920%\u30aa\u30d5",
+                "value": "Save 20% today"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/cc-shared/fragments/promos/spring-sale/spring-sale.xlsx (Promo). Row: replace | any-marquee primary-cta | **/products/photoshop | all = {{spring-cta}}; replacing the link's text keeps its href. Placeholders: key, fr, jp, value; the locale columns come before value because Milo uses the first matching header. Metadata: add the manifest to the promo schedule or personalization metadata. QA with ?mep and Highlight Changes: US and /de/ show 'Save 20% today', /fr/ shows the French text, /jp/ the Japanese text."
+    },
+    {
+      "id": "heldout-author-promo-plans-filter",
+      "split": "holdout",
+      "prompt": "Black Friday: on every product's plans page (like /products/photoshop/plans.html or /fr/products/illustrator/plans.html), in every locale, replace the plans banner fragment (/cc-shared/fragments/plans/default-banner) with /cc-shared/fragments/promos/black-friday/plans-banner. Other pages also show the default banner and must not change.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["black-friday\\.xlsx", "\\?mep|Highlight Changes"],
+      "reject": [],
+      "review": ["Writes a Promo manifest black-friday.xlsx in its own promo folder (promos/.../black-friday/).", "Uses a page filter that matches plans pages for any product and locale (e.g. **/products/**/plans) and not other pages; single * is a regex quantifier, not a wildcard.", "Replaces the banner fragment by its path or by a selector that matches it in plain HTML, with the given promo fragment.", "QA names the expected banner on a US and a localized plans page and an unchanged non-plans page."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/personalization-tags.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/photoshop-plans.html", "dest": "content/products/photoshop/plans.html"}, {"src": "evals/fixtures/authoring/pages/fr-illustrator-plans.html", "dest": "content/fr/products/illustrator/plans.html"}, {"src": "evals/fixtures/authoring/pages/photoshop-with-plans-banner.html", "dest": "content/products/photoshop.html"}],
+      "artifact": {
+        "path": "content/(?:[a-z0-9-]+/)*promos/(?:[a-z0-9_-]+/)?black-friday/black-friday\\.xlsx",
+        "info": {
+          "manifest-type": "promo"
+        },
+        "simulate": {
+          "spec": "evals/fixtures/authoring/promo-plans.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/photoshop/plans.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "plans-banner",
+                    "section2"
+                  ],
+                  "content": "/cc-shared/fragments/promos/black-friday/plans-banner$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/fr/products/illustrator/plans.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "plans-banner",
+                    "section2"
+                  ],
+                  "content": "/cc-shared/fragments/promos/black-friday/plans-banner$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "visitor",
+              "experience": ".+",
+              "unchanged": [
+                "plans-banner",
+                "section2"
+              ]
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/cc-shared/fragments/promos/black-friday/black-friday.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Promo",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "all"
+            ],
+            "rows": [
+              {
+                "action": "replace",
+                "selector": "/cc-shared/fragments/plans/default-banner",
+                "page filter (optional)": "**/products/**/plans",
+                "all": "/cc-shared/fragments/promos/black-friday/plans-banner"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/cc-shared/fragments/promos/black-friday/black-friday.xlsx (Promo). Row: replace | /cc-shared/fragments/plans/default-banner | **/products/**/plans | all = /cc-shared/fragments/promos/black-friday/plans-banner. A single * would be a regex quantifier, so use ** for any product and locale prefix. QA with ?mep and Highlight Changes: both plans pages show the Black Friday banner; /products/photoshop.html keeps the default banner."
+    },
+    {
+      "id": "author-edit-existing-manifest",
+      "prompt": "Update content/products/acrobat.xlsx (the manifest for https://www.adobe.com/products/acrobat.html): signed-out phone visitors should no longer see the comparison table block in the third section. Keep everything else in the workbook exactly as it is.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save your changes to that workbook, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["acrobat\\.xlsx", "remove", "\\?mep|Highlight Changes"],
+      "reject": [],
+      "review": ["Edits content/products/acrobat.xlsx in place and keeps the existing rows, columns, info values, placeholders and readme.", "Adds a remove row for the table in the existing phone column without reordering columns (signed-in phone visitors still get loggedin).", "Uses a selector that matches the table block in plain HTML.", "QA names the expected result: table hidden for a signed-out phone visitor, shown on desktop."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/actions.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/acrobat.html", "dest": "content/products/acrobat.html"}, {"src": "evals/fixtures/authoring/acrobat.xlsx", "dest": "content/products/acrobat.xlsx"}],
+      "artifact": {
+        "path": "content/products/acrobat\\.xlsx",
+        "info": {
+          "manifest-type": "personalization",
+          "manifest-execution-order": "normal"
+        },
+        "columns": "loggedin \\| phone",
+        "preserve": {
+          "source": "evals/fixtures/authoring/acrobat.xlsx"
+        },
+        "simulate": {
+          "spec": "evals/fixtures/authoring/edit-acrobat.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/acrobat.html",
+              "visitor": "signed-out-phone",
+              "experience": "phone",
+              "changes": [
+                {
+                  "action": "remove",
+                  "target": [
+                    "comparison-table",
+                    "section3"
+                  ]
+                },
+                {
+                  "action": "replace",
+                  "target": "hero-cta",
+                  "content": "Get the app"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/acrobat.html",
+              "visitor": "signed-in-phone",
+              "experience": "loggedin",
+              "unchanged": [
+                "comparison-table",
+                "section3"
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/acrobat.html",
+              "visitor": "signed-out-desktop",
+              "experience": "default"
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/products/acrobat.xlsx",
+        "edit": {
+          "experiences": {
+            "append": [
+              {
+                "action": "remove",
+                "selector": "table",
+                "page filter (optional)": "/products/acrobat",
+                "phone": "true"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Edited content/products/acrobat.xlsx in place with mep_xlsx.py edit: appended remove | table | /products/acrobat | phone = true. The existing loggedin and phone rows, info values, placeholders and readme are unchanged, and loggedin still comes first. The personalization metadata already points at /products/acrobat.json. QA with ?mep and Highlight Changes: a signed-out phone visitor sees no comparison table; desktop still shows it."
+    },
+    {
+      "id": "author-gnav-metadata",
+      "prompt": "On https://www.adobe.com/creativecloud.html, signed-in visitors should get the navigation /cc-shared/fragments/gnav/loggedin-gnav instead of the default nav. Nothing else changes.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["updateMetadata", "gnav-source", "\\?mep|Highlight Changes"],
+      "reject": [],
+      "review": ["Writes a Personalization manifest named creativecloud.xlsx in a subfolder (not the content root).", "Uses updateMetadata with gnav-source and the loggedin column to point at the given nav.", "QA names the expected nav for signed-in and signed-out visitors."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/actions.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/creativecloud.html", "dest": "content/creativecloud.html"}],
+      "artifact": {
+        "path": "content/(?:[a-z0-9-]+/)+creativecloud\\.xlsx",
+        "info": {
+          "manifest-type": "personalization"
+        },
+        "columns": "loggedin",
+        "rows": [
+          {
+            "action": "updatemetadata",
+            "selector": "gnav-source"
+          }
+        ],
+        "simulate": {
+          "spec": "evals/fixtures/authoring/gnav.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/creativecloud.html",
+              "visitor": "signed-in",
+              "experience": "loggedin",
+              "metadata": {
+                "gnav-source": "/cc-shared/fragments/gnav/loggedin-gnav$"
+              }
+            },
+            {
+              "page": "https://www.adobe.com/creativecloud.html",
+              "visitor": "signed-out",
+              "experience": "default"
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/cc-shared/fragments/mep/creativecloud.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Personalization",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "loggedin"
+            ],
+            "rows": [
+              {
+                "action": "updateMetadata",
+                "selector": "gnav-source",
+                "page filter (optional)": "",
+                "loggedin": "https://www.adobe.com/cc-shared/fragments/gnav/loggedin-gnav"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/cc-shared/fragments/mep/creativecloud.xlsx (Personalization), not at the root. Row: updateMetadata | gnav-source | loggedin = https://www.adobe.com/cc-shared/fragments/gnav/loggedin-gnav. Page metadata: personalization = /cc-shared/fragments/mep/creativecloud.json. QA with ?mep and Highlight Changes: signed-in visitors load the loggedin-gnav; signed-out visitors keep the default gnav."
+    },
+    {
+      "id": "author-target-ab-test",
+      "prompt": "Set up the A/B test for Target activity ACE0123 on https://www.adobe.com/products/illustrator.html. Its Target experiences are named `control` and `trial-cta`. In trial-cta, the marquee's primary CTA text changes to 'Start your free trial' (same link); control sees the current page.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["ace0123\\.xlsx", "target[^\\n]{0,30}\\bon\\b", "\\?mep|Highlight Changes"],
+      "reject": [],
+      "review": ["Writes a Test manifest ace0123.xlsx in a tests/<year>/<quarter>/ folder.", "Experience columns are target- plus the Target experience names (target-trial-cta, optional empty target-control).", "Changes only the CTA text in target-trial-cta; control makes no change.", "States the page needs target metadata on (it is off) and gives a forced-preview QA step with the expected CTA text per experience."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/personalization-tags.md", "skills/milo-mep/references/enable-and-qa.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/illustrator.html", "dest": "content/products/illustrator.html"}],
+      "artifact": {
+        "path": "content/(?:[a-z0-9-]+/)*tests/20\\d\\d/q[1-4]/ace0123\\.xlsx",
+        "info": {
+          "manifest-type": "test"
+        },
+        "columns": "(?:target-control \\| )?target-trial-cta(?: \\| target-control)?",
+        "simulate": {
+          "spec": "evals/fixtures/authoring/target-ab.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/illustrator.html",
+              "visitor": "trial-cta",
+              "experience": "target-trial-cta",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": "hero-cta",
+                  "content": "^\\s*Start your free trial\\s*$"
+                }
+              ],
+              "unchanged": [
+                "marquee",
+                "section1"
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/illustrator.html",
+              "visitor": "control",
+              "experience": "default|target-control",
+              "unchanged": [
+                "hero-cta",
+                "marquee",
+                "section1"
+              ]
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/cc-shared/fragments/tests/2026/q4/ace0123.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Test",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "target-trial-cta"
+            ],
+            "rows": [
+              {
+                "action": "replace",
+                "selector": "any-marquee primary-cta",
+                "page filter (optional)": "/products/illustrator",
+                "target-trial-cta": "Start your free trial"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/cc-shared/fragments/tests/2026/q4/ace0123.xlsx (Test). Column target-trial-cta (Target labels experiences target-<experience name>); control needs no column. Row: replace | any-marquee primary-cta | /products/illustrator | target-trial-cta = Start your free trial; replacing the link text keeps the href. Page metadata: target must be on (it is off now); Target delivers the manifest. QA: force target-trial-cta with ?mep and Highlight Changes and expect 'Start your free trial'; control shows 'Buy now'."
+    },
+    {
+      "id": "heldout-author-country-columns",
+      "split": "holdout",
+      "prompt": "On https://www.adobe.com/products/premiere.html, visitors in the UK and Ireland should see the pricing banner /cc-shared/fragments/products/premiere/banner-uk-ie, Canadian visitors /cc-shared/fragments/products/premiere/banner-ca, and everyone else the current banner (/cc-shared/fragments/products/premiere/banner).\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["countryip\\(", "premiere\\.xlsx", "akamaiLocale|\\?country"],
+      "reject": [],
+      "review": ["Writes a Personalization manifest premiere.xlsx in the page's folder or a cc-shared folder.", "Uses countryip(...) experience columns (gb or uk, ie; ca) so UK, Irish and Canadian visitors get their banners and others none.", "Replaces the banner by fragment path or a selector that matches it in plain HTML.", "QA spoofs the country (?akamaiLocale or the MEP button market) and names the expected banner per country."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/personalization-tags.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/premiere.html", "dest": "content/products/premiere.html"}],
+      "artifact": {
+        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/premiere\\.xlsx",
+        "info": {
+          "manifest-type": "personalization"
+        },
+        "simulate": {
+          "spec": "evals/fixtures/authoring/country.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/premiere.html",
+              "visitor": "gb",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "pricing-banner",
+                    "section2"
+                  ],
+                  "content": "/cc-shared/fragments/products/premiere/banner-uk-ie$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/premiere.html",
+              "visitor": "ie",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "pricing-banner",
+                    "section2"
+                  ],
+                  "content": "/cc-shared/fragments/products/premiere/banner-uk-ie$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/premiere.html",
+              "visitor": "ca",
+              "experience": ".+",
+              "changes": [
+                {
+                  "action": "replace",
+                  "target": [
+                    "pricing-banner",
+                    "section2"
+                  ],
+                  "content": "/cc-shared/fragments/products/premiere/banner-ca$"
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/premiere.html",
+              "visitor": "us",
+              "experience": ".+",
+              "unchanged": [
+                "pricing-banner",
+                "section2"
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/premiere.html",
+              "visitor": "unknown",
+              "experience": ".+",
+              "unchanged": [
+                "pricing-banner",
+                "section2"
+              ]
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/products/premiere.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Personalization",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "countryip(gb,ie)",
+              "countryip(ca)"
+            ],
+            "rows": [
+              {
+                "action": "replace",
+                "selector": "/cc-shared/fragments/products/premiere/banner",
+                "page filter (optional)": "/products/premiere",
+                "countryip(gb,ie)": "/cc-shared/fragments/products/premiere/banner-uk-ie",
+                "countryip(ca)": "/cc-shared/fragments/products/premiere/banner-ca"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/products/premiere.xlsx (Personalization). Columns countryip(gb,ie) and countryip(ca). Row: replace | /cc-shared/fragments/products/premiere/banner | /products/premiere | banner-uk-ie | banner-ca. Metadata: personalization = /products/premiere.json. QA with ?mep&akamaiLocale=gb (and ie, ca, us) plus Highlight Changes: GB and IE show banner-uk-ie, CA shows banner-ca, US keeps the default banner."
+    },
+    {
+      "id": "author-insert-tablet-section",
+      "prompt": "On https://www.adobe.com/products/photoshop.html, tablet visitors should see an extra section, the fragment /cc-shared/fragments/products/photoshop/tablet-apps, right after the marquee section. No other changes, and phones and desktops are unaffected.\n\nThis repository mirrors our SharePoint content under `content/`: `content/<path>.html` is the authored (plain) HTML of `https://www.adobe.com/<path>.html`, and folders match SharePoint. Save the manifest workbook (.xlsx) under `content/` where it should live, then tell me the rows, the page metadata I need, and how to QA it.",
+      "activate": true,
+      "checks": ["insertAfter", "tablet", "\\?mep|Highlight Changes"],
+      "reject": [],
+      "review": ["Writes a Personalization manifest photoshop.xlsx (or photoshop-devicetype.xlsx) in the page's folder or a cc-shared folder.", "Inserts the given fragment between the marquee section and the next section (insertAfter section1/marquee or insertBefore section2) in a tablet column.", "QA names the expected extra section on a tablet and none on phone and desktop."],
+      "evidence": ["skills/milo-mep/references/conventions.md", "skills/milo-mep/references/xlsx-io.md", "skills/milo-mep/assets/source/personalization.js", "skills/milo-mep/references/actions.md", "skills/milo-mep/references/selectors.md"],
+      "workspace_files": [{"src": "evals/fixtures/authoring/pages/photoshop.html", "dest": "content/products/photoshop.html"}],
+      "artifact": {
+        "path": "content/(?:products|(?:[a-z0-9-]+/)*cc-shared(?:/[a-z0-9-]+)*)/photoshop(?:-devicetype)?\\.xlsx",
+        "info": {
+          "manifest-type": "personalization"
+        },
+        "columns": "tablet",
+        "simulate": {
+          "spec": "evals/fixtures/authoring/tablet.spec.json",
+          "expect": [
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "ipad",
+              "experience": "tablet",
+              "changes": [
+                {
+                  "any": [
+                    {
+                      "action": "insertafter",
+                      "target": [
+                        "section1",
+                        "marquee"
+                      ],
+                      "content": "/cc-shared/fragments/products/photoshop/tablet-apps$"
+                    },
+                    {
+                      "action": "insertbefore",
+                      "target": "section2",
+                      "content": "/cc-shared/fragments/products/photoshop/tablet-apps$"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "android-tablet",
+              "experience": "tablet",
+              "changes": [
+                {
+                  "any": [
+                    {
+                      "action": "insertafter",
+                      "target": [
+                        "section1",
+                        "marquee"
+                      ],
+                      "content": "/cc-shared/fragments/products/photoshop/tablet-apps$"
+                    },
+                    {
+                      "action": "insertbefore",
+                      "target": "section2",
+                      "content": "/cc-shared/fragments/products/photoshop/tablet-apps$"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "phone",
+              "experience": "default"
+            },
+            {
+              "page": "https://www.adobe.com/products/photoshop.html",
+              "visitor": "desktop",
+              "experience": "default"
+            }
+          ]
+        }
+      },
+      "reference_artifact": {
+        "path": "content/products/photoshop.xlsx",
+        "write": {
+          "info": {
+            "manifest-type": "Personalization",
+            "manifest-execution-order": "Normal"
+          },
+          "experiences": {
+            "columns": [
+              "action",
+              "selector",
+              "page filter (optional)",
+              "tablet"
+            ],
+            "rows": [
+              {
+                "action": "insertAfter",
+                "selector": "section1",
+                "page filter (optional)": "/products/photoshop",
+                "tablet": "/cc-shared/fragments/products/photoshop/tablet-apps"
+              }
+            ]
+          }
+        }
+      },
+      "reference_answer": "Saved content/products/photoshop.xlsx (Personalization). Row: insertAfter | section1 | /products/photoshop | tablet = /cc-shared/fragments/products/photoshop/tablet-apps. Metadata: personalization = /products/photoshop.json. QA with ?mep and Highlight Changes on a tablet: the tablet-apps section appears after the marquee section; phone and desktop show no extra section."
     }
   ]
 }

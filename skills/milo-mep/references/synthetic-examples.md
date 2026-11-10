@@ -2,7 +2,8 @@
 
 These are illustrative, not live Adobe offers or publish-ready paths. Confirm
 plain HTML, destination paths, consent classification, and stakeholders before
-using them. Build workbooks from the official template with `mep_xlsx.py write`.
+using them. Build workbooks from the official template with `mep_xlsx.py write`;
+change existing workbooks with `mep_xlsx.py edit`.
 
 ## 1. Native personalization: phone hero, desktop unchanged
 

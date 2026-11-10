@@ -1,4 +1,4 @@
-# Reading & Writing Manifest .xlsx Files
+# Reading, Writing & Editing Manifest .xlsx Files
 
 Use the bundled script **`scripts/mep_xlsx.py`** for any manifest `.xlsx` I/O —
 don't hand-roll xlsx parsing. **Reading** uses **openpyxl** (vendored in
@@ -31,6 +31,9 @@ python scripts/mep_xlsx.py write --out new-manifest.xlsx --spec spec.json
 # optional: --template <other-template.xlsx>  (defaults to the bundled one)
 ```
 
+Keep the spec file in your working folder (not `/tmp`), or pipe it in with
+`--spec -` (for example a heredoc), and delete scratch specs afterwards.
+
 `spec.json` (all keys optional):
 
 ```json
@@ -58,8 +61,48 @@ python scripts/mep_xlsx.py write --out new-manifest.xlsx --spec spec.json
   experience columns here (e.g. `target-…`, `param-view=…`, device tags).
 - Existing data rows in the template are cleared before your rows are written.
 
-Programmatic API (same file): `read_manifest(path)` and
-`write_manifest(out, template_path=..., info=..., experiences=..., placeholders=...)`.
+## Edit an existing manifest
+
+Use `edit` to change a workbook someone already authored. It keeps unrelated
+rows, other sheets, the `readme`, cell styles, and dropdowns; only the edited
+sheets' `<sheetData>` (and `helix-info` value cells) change.
+
+```bash
+python scripts/mep_xlsx.py edit existing.xlsx --out existing.xlsx --spec edit.json
+```
+
+```json
+{
+  "info": { "manifest-execution-order": "First" },
+  "experiences": {
+    "add_columns": [{"name": "phone", "before": "all"}],
+    "update": [{"match": {"action": "replace", "selector": "any-marquee"},
+                "set": {"phone": "/example/fragments/marquee-phone"}}],
+    "delete": [{"match": {"selector": ".old-banner"}}],
+    "append": [{"action": "remove", "selector": ".legal", "phone": "true"}]
+  },
+  "placeholders": { "update": [{"match": {"key": "cta"}, "set": {"value": "Buy now"}}] }
+}
+```
+
+- Operations run in order: `add_columns` → `update` → `delete` → `append`.
+- Each `match` compares trimmed cell values and must select **exactly one**
+  row; add more columns to the match until it does.
+- A new column copies the style of its `before`/`after` anchor. Put a new
+  experience column where its **priority** belongs (left of broader ones;
+  never right of `all`).
+- `info` sets existing keys and appends supported missing keys.
+- Unknown columns, keys, or operations and ambiguous matches exit 1 and write
+  nothing, so `--out` may safely be the input file. Fully blank rows are
+  dropped from edited sheets.
+- `edit` changes a local file. Saving it back to SharePoint/DA is a separate,
+  explicitly authorized step (see *Live-edit boundaries* in `SKILL.md`).
+
+Lint the result: `python scripts/lint_manifest.py existing.xlsx`.
+
+Programmatic API (same file): `read_manifest(path)`,
+`write_manifest(out, template_path=..., info=..., experiences=..., placeholders=...)`,
+and `edit_manifest(in_path, out_path, spec)`.
 
 ## Dropdowns / styles are preserved
 

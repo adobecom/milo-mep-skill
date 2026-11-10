@@ -1,0 +1,26 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "htmlFile": "pages/photoshop.html",
+      "visitors": [
+        {
+          "id": "signed-in-desktop",
+          "signedIn": true
+        },
+        {
+          "id": "signed-in-phone",
+          "signedIn": true,
+          "device": "iphone"
+        },
+        {
+          "id": "signed-out-phone",
+          "device": "iphone"
+        },
+        {
+          "id": "signed-out-desktop"
+        }
+      ]
+    }
+  ]
+}

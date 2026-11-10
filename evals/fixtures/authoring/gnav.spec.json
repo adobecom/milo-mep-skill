@@ -1,0 +1,17 @@
+{
+  "pages": [
+    {
+      "url": "https://www.adobe.com/creativecloud.html",
+      "htmlFile": "pages/creativecloud.html",
+      "visitors": [
+        {
+          "id": "signed-in",
+          "signedIn": true
+        },
+        {
+          "id": "signed-out"
+        }
+      ]
+    }
+  ]
+}

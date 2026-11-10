@@ -27,6 +27,16 @@ Exact source names: `remove`, `replace`, `updateattribute`, `analyticifseen`,
 `replacepage`, `updateframework`, `updatemetadata`, `useblockcode`
 (case-insensitive).
 
+**Common `updateMetadata` targets.** In published adobe.com manifests,
+`updateMetadata` rows mostly set navigation metadata:
+
+| selector (metadata name) | value | effect (pinned source) |
+|---|---|---|
+| `gnav-source` | gnav or `localnav-…` fragment URL | `getGnavSource()` loads this navigation instead of the locale default; a `localnav-` file name selects the local nav unless `mobile-gnav-v2` is `off` (`isLocalNav()`, `utils.js`). A Target-delivered row also tags the header with the test id (`addMepAnalytics`). |
+| `gnav-promo-source` | promo-bar fragment URL | `decorateHeader()` adds a promo wrapper above the header (`utils.js`). |
+
+Scope these rows with a page filter when the manifest loads on several pages.
+
 ## Legacy action names
 
 The runtime lowercases the action and strips the substrings `content`,

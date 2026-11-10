@@ -236,7 +236,7 @@ from.
 | `mboxOverride.browserIp=<ip>` | align Target's IP-based geo-fencing with the spoofed country |
 | `mepMasMarket=true` | persist the M@S market spoof across reloads |
 | `meplcp` | preview-only LCP image check (see below) |
-| `?instant=<iso-date>` | simulate "now" (for promo scheduling windows) |
+| `?instant=<iso-date>` | simulate "now" (for promo scheduling windows); end it with `Z` (GMT, like schedule bounds) or it is read as browser local time; a raw `+hh:mm` offset decodes to a space (invalid date, promo always on), so write `%2B` |
 
 ## Limitations
 
