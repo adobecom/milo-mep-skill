@@ -3,6 +3,19 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
+## 2026-11-11
+
+**Skill release 1.1.12 — gnav promo bar by gnav type (unreleased candidate)**
+- `selectors.md` → *Modifying the gnav promo strip* now distinguishes the
+  classic Milo gnav (bar fragment must be an `aside` block) from the new gnav
+  (`gnav-foundation: c2` or `foundation: c2`; bar fragment must be a
+  `gnav-promo` block that also honors `gnav-promo-countdown`). Covers the
+  silent failure and `<site>/blocks/gnav-promo/` 404s, plus a page-filter
+  split for manifests that serve both page kinds.
+- `enable-and-qa.md`: added troubleshooting cause 12 for a promo bar whose
+  metadata is set but which never renders.
+- `actions.md`: the `gnav-promo-source` row links to the gnav-type rules.
+
 ## 2026-11-10
 
 **Skill release 1.1.11 — manifest editing and authoring evaluations (validated)**
