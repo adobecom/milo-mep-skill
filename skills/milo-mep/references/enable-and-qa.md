@@ -262,6 +262,13 @@ fragments or inventing page-specific audience columns.
    `country filter` / `country filter optional` instead.
    A forced `?mep` variant overrides both consent and geo restriction, so
    preview success does not prove eligibility; see `mep-button.md`.
+12. **Gnav promo bar set but not shown** — `gnav-promo-source` metadata has the
+   new value, yet no bar appears (`<header>` lacks `has-promo`; maybe 404s for
+   `<site>/blocks/gnav-promo/gnav-promo.js`). The bar fragment's block doesn't
+   match the page's gnav: classic gnav (no `gnav-foundation`) needs `aside`;
+   new gnav (`gnav-foundation: c2` or `foundation: c2`) needs `gnav-promo`. MEP worked; fix the
+   fragment or split the row by page filter. See `selectors.md` → *Modifying
+   the gnav promo strip*.
 
 Reach for the `?mep` button's **Highlight Changes** and per-manifest experience
 dropdown to confirm what's actually being applied.

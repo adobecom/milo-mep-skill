@@ -157,6 +157,37 @@ the gnav at a **new source fragment** for the targeted audience. The promo strip
 **promo card inside the gnav flyout** has been unreliable — no dependable
 selector/attribute for it, so treat that specific element as a known gap.
 
+**The promo-bar fragment's block depends on which gnav the page uses.** Both
+gnavs read the same `gnav-promo-source` metadata, but each looks for a
+different block in that fragment:
+
+| Page gnav | How to tell | Bar fragment block | `gnav-promo-countdown` |
+|---|---|---|---|
+| Classic Milo gnav | no `gnav-foundation` metadata (e.g. `/creativecloud/plans`, `/products/catalog`) | `aside` (promobar/promo-banner variant) | not read |
+| New gnav | `gnav-foundation: c2` or `foundation: c2` (e.g. `/creativecloud.html`) | `gnav-promo` | read (`start, end` window) |
+
+A mismatch fails quietly: the classic gnav finds no `.aside`, removes the promo
+wrapper, and leaves `<header>` without `has-promo`. It also tries to load
+`gnav-promo` as an ordinary block from the site's code root, so the console
+shows 404s like `/creativecloud/plans/blocks/gnav-promo/gnav-promo.js`. Check
+`gnav-foundation` on every page the row reaches. When one manifest serves both
+kinds of pages, keep one fragment per block type and split the row by page
+filter. `updateMetadata` rows apply in row order, so a later matching row
+overwrites an earlier one:
+
+| action | selector | page filter (optional) | all |
+|---|---|---|---|
+| updateMetadata | gnav-promo-source | | `/federal/globalnav/acom/fragments/promos/example/gnav-bar` (`gnav-promo`) |
+| updateMetadata | gnav-promo-source | `(**/creativecloud/plans\|**/products/catalog)` | `/federal/globalnav/acom/fragments/promos/example/gnav-bar-aside` (`aside`) |
+
+Source: classic gnav `decorateAside` in
+`libs/blocks/global-navigation/features/aside/aside.js` (requires `.aside`);
+new gnav loads the federal bundle
+`/federal/libs/global-navigation/dist/main.js` from
+`libs/c2/blocks/global-navigation/global-navigation.js`, which selects
+`.gnav-promo` and reads `gnav-promo-countdown`. Neither file is in the bundled
+snapshot; verify against a live checkout when behavior matters.
+
 ## Advanced CSS patterns
 
 - **Attribute selectors**: `#my-section [class]` (has any class);
