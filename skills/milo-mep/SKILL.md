@@ -1,7 +1,7 @@
 ---
 name: milo-mep
 metadata:
-  version: "1.1.12"
+  version: "1.1.13"
 description: >-
   Understand, interpret, author, and QA MEP (Milo Experiments and Personalization)
   Excel/DA/JSON manifests for adobe.com pages built on Milo/EDS. Use for manifests,
@@ -17,7 +17,7 @@ description: >-
 
 # Milo Experiments and Personalization (MEP)
 
-**Skill release: 1.1.12.** This identifies the installed skill, not the Milo
+**Skill release: 1.1.13.** This identifies the installed skill, not the Milo
 runtime. The separate runtime source pin is in `assets/source/SOURCE_VERSION`.
 
 ## What MEP is
@@ -53,6 +53,7 @@ Start here to orient, then follow the pointers.
 | **Author / design** a new manifest from a goal | start from `assets/mep-manifest-template.xlsx` (the official base), all of the above **plus** `references/conventions.md` (naming/folders) |
 | **Enable** MEP on a page | `references/enable-and-qa.md` |
 | **QA / troubleshoot** (why isn't it applying?) | `references/enable-and-qa.md` |
+| **Gnav cards / flyout content** (including HP C2 Gnav) | `references/selectors.md` → *C2 Gnav cards and submenu content*; inspect the authored submenu, not rendered `feds-*` markup |
 | Copy varies by page URL / many nearly identical fragments | `references/manifest-schema.md` → *Page-scoped placeholder values* |
 | Predict placeholder values, column order, or empty-cell behavior | `references/manifest-schema.md` → *Page-scoped placeholder values*; distinguish stored values from rendering |
 | Explain the **MEP button** / `?mep` preview (what it does + how it works) | `references/mep-button.md` |
@@ -134,6 +135,15 @@ these for every response:
   searches, not which match it picks, so mention first-match completion when
   several fragments may match. Verify the
   intended element with Highlight Changes and its final attribute/content.
+- **Gnav cards.** Read `references/selectors.md` before answering. For C2,
+  use `in-block:global-navigation` with an authored submenu selector, not
+  `in-block:global` or rendered `feds-product-card__*` classes. Adding
+  `#_include-gnav` alone does not repair a decorated selector; the flag is
+  supported by current Milo, not invalid. Scope to the intended submenu as
+  well as the card: first-match behavior is not a nav-wide uniqueness guarantee.
+  Inspect supplied page/manifest URLs read-only when accessible; ask for
+  authored HTML only if it cannot be retrieved. Show a concrete complete row,
+  and verify the intended card changes while other tabs remain unchanged.
 - **Adding to existing personalization.** Never offer "if a manifest already
   exists, just add this row to it" for a manifest you have not inspected.
   Either inspect its experience columns and applicable rows and show how the

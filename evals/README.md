@@ -1,6 +1,6 @@
 # Skill behavioral evaluations
 
-The 41 cases in `cases.json` cover activation (including implicit MEP requests and negative
+The 42 cases in `cases.json` cover activation (including implicit MEP requests and negative
 examples), priority, consent defaults, localization, selectors, experience
 order, trusted fragment hosts, live-edit authorization, page-scoped
 placeholders, forced-preview carry-over, class-attribute replacement,
@@ -8,6 +8,8 @@ existing M@S Studio href updates, forced-preview gating, info-value casing,
 missing info sheets, `remove` cell typos, the LCP image check, row-level
 country filters, negated country lists, numeric selector suffixes, single-`*`
 page filters, promo `?instant` time zones, and `postlcp` first-section limits.
+The C2 Gnav card case (added in 1.1.13) checks authored submenu selectors,
+the exact block registration key, valid flag routing, and cross-tab scoping.
 Eight authoring cases (added in 1.1.11) require the answer to **write a manifest
 `.xlsx`** that the grader reads, lints, and simulates (see *Authoring cases*).
 Cases added in 1.1.10 are synthetic versions of recurring community question

@@ -177,6 +177,12 @@ rendering is a separate decoration step (`utils.js` auto-block routing and
   names pass through untouched.
 - **`in-block:<blockname> <selector>`** — scopes an action to inside a specific
   block; also the mechanism for MAS (`mas.adobe.com`) fragment overrides.
+  `registerInBlockActions` stores commands under the exact block name; it
+  does not alias `global` to `global-navigation`. C2 Gnav consumes
+  `in-block:global-navigation` and runs commands against fetched authored
+  submenu HTML, not rendered `feds-*` classes. The C2/Federal integration is
+  outside this snapshot; see `selectors.md` → *C2 Gnav cards and submenu
+  content* for source evidence, supported flag routing, and cross-tab scoping.
 - **`twp buttons`** — special selector type for free-trial buttons (auto-adds
   include-fragments/all/include-gnav; matches localized "free trial" copy).
 

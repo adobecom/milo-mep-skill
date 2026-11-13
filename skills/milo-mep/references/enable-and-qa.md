@@ -239,6 +239,11 @@ fragments or inventing page-specific audience columns.
 5. **Selector miss** — written against the decorated DOM instead of plain HTML,
    too specific, or matched only the first element (needs `#_all`) / didn't
    look inside a fragment (needs `#_include-fragments`).
+   For **C2 Gnav cards**, use `in-block:global-navigation` with the authored
+   submenu selector, not `in-block:global` or `feds-product-card__*` classes.
+   Adding `#_include-gnav` alone won't repair rendered CSS. Scope both submenu
+   and card; a product repeated in several tabs can change in each. See
+   `selectors.md` → *C2 Gnav cards and submenu content* for complete example rows.
 6. **Audience mismatch** — tag not actually met (e.g. device detected
    differently); re-qualification needs a reload after spoofing.
 7. **Missing localized fragment** — on a GEO page, the same-named local fragment

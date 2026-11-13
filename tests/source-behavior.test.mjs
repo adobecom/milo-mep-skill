@@ -191,6 +191,27 @@ const modifySelector = new Function("COMMANDS_KEYS", "SELECTOR_TYPES", "getSelec
   commandKeys, { twpButtons: "twpButtons" }, () => "css",
 );
 
+test("pinned in-block registration preserves the exact C2 gnav key and authored selector", () => {
+  const state = config();
+  const register = new Function("IN_BLOCK_SELECTOR_PREFIX", "getConfig", "getSelectorType", "SELECTOR_TYPES",
+    `${section("function registerInBlockActions(", "const updateEndNumber =")}; return registerInBlockActions;`)(
+    "in-block:", () => state, () => "css", { fragment: "fragment" },
+  );
+  const command = {
+    action: "replace",
+    selector: "in-block:global-navigation #featured ~ product-card1 p:first-child a",
+    content: "New title",
+  };
+  register(command);
+  assert.equal(command.selector, "#featured ~ product-card1 p:first-child a");
+  assert.deepEqual(state.mep.inBlock["global-navigation"].commands, [command]);
+  assert.equal(modifySelector(command.selector, "replace").modifiedSelector,
+    "#featured ~ .product-card:nth-child(1 of .product-card) p:first-child a");
+  register({ ...command, selector: "in-block:global #featured .product-card" });
+  assert.equal(state.mep.inBlock["global-navigation"].commands.length, 1);
+  assert.equal(state.mep.inBlock.global.commands[0].selector, "#featured .product-card");
+});
+
 test("pinned runtime separates the final attribute token from selector matching and flags", () => {
   const parsed = modifySelector('a[href*="query=example"] href #_include-fragments #_all', "updateattribute");
   assert.equal(parsed.modifiedSelector, 'a[href*="query=example"]');
@@ -315,6 +336,14 @@ test("pinned commands complete on the first match; include-fragments widens scop
   all = await run.handleCommands(all, root("fragment-b", 1), false, true);
   assert.equal(all.length, 1);
   assert.deepEqual(run.applied, ["fragment-a-1", "fragment-a-2", "fragment-b-1"]);
+
+  // Federal reuses its input list, rather than the returned pending-command list.
+  run = runner(root("page", 0));
+  const shared = command("a.cta href");
+  assert.deepEqual(await run.handleCommands(shared, root("submenu-a", 2), true, true), []);
+  assert.equal(shared[0].completed, true);
+  assert.deepEqual(await run.handleCommands(shared, root("submenu-b", 2), true, true), []);
+  assert.deepEqual(run.applied, ["submenu-a-1", "submenu-b-1"]);
 });
 
 test("pinned fragment swaps keep the first selector and chain only forward in sorted order", () => {

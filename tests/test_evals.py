@@ -110,6 +110,32 @@ class EvalTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertTrue(any("forbidden assertion" in f for r in result["results"] for f in r["failures"]))
 
+    def test_gnav_case_rejects_flag_only_fix_wrong_key_and_invalid_flag_claim(self):
+        for advice in (
+            "Use in-block:global for this nav.",
+            "Just add #_include-gnav to the original selector.",
+            "#_include-gnav is invalid.",
+            "Only in-block commands are supported.",
+        ):
+            with self.subTest(advice=advice):
+                capture = copy.deepcopy(self.capture)
+                response = next(r for r in capture["responses"] if r["id"] == "c2-gnav-card-selector")
+                response["answer"] += " " + advice
+                result = next(r for r in grade(self.cases, capture)["results"]
+                              if r["id"] == response["id"])
+                self.assertFalse(result["automatic_pass"])
+                self.assertTrue(any("forbidden assertion" in f for f in result["failures"]))
+
+    def test_gnav_case_requires_concrete_submenu_scoped_row(self):
+        capture = copy.deepcopy(self.capture)
+        response = next(r for r in capture["responses"] if r["id"] == "c2-gnav-card-selector")
+        response["answer"] = response["answer"].replace(
+            "replace | in-block:global-navigation #featured ~ product-card1 p:first-child a | New title",
+            "<selector matching the authored card title> #_include-gnav",
+        )
+        result = next(r for r in grade(self.cases, capture)["results"] if r["id"] == response["id"])
+        self.assertFalse(result["automatic_pass"])
+
     def test_equivalent_prose_and_markdown_tables_pass_concept_checks(self):
         examples = {
             "implicit-phone-hero": "Personalization: replace | any-marquee | phone. The page doesn't need `target on`.",

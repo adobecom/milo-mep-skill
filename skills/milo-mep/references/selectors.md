@@ -113,7 +113,9 @@ Append these to a selector (combine as needed; parsed by splitting on `#_`):
   `#_all` unless the user intends every match. Verify the intended element with
   Highlight Changes and its final attribute/content.
 - **`#_include-gnav`** — also search inside the global nav (gnav), which MEP
-  otherwise doesn't scan.
+  otherwise doesn't scan. Current Milo's C2 adapter also forwards commands
+  bearing this flag to Federal. It does **not** make rendered `feds-*` markup
+  available to MEP. For C2 card content, see *C2 Gnav cards and submenu content*.
 - **`#_dnt`** — (on fragments) do-not-translate: skip localized fragment lookup.
   (Unlike the others, this isn't a parsed selector modifier — it's a hash on the
   fragment URL handled by `normalizePath`.)
@@ -144,18 +146,80 @@ Prefix a selector with `in-block:<blockname>` to scope the action to inside a
 specific block, e.g. `in-block:marquee primary-cta`. This is also the mechanism
 for MAS (`mas.adobe.com`) fragment overrides.
 
-**Global nav / LocalNav (`in-block:global`).** To personalize content in the
-shared global nav or LocalNav for one country **without cloning the nav file**,
-combine a `countryip(...)` experience column with an **`in-block:global`**
-selector — `countryip(de)` scopes the row to the country, `in-block:global`
-reaches inside the shared `global` (nav) block so the base file stays shared.
+The block name must match the consuming integration's registration key.
+`in-block:global` is **not** the C2 global-navigation key; it registers commands
+under an unused `global` entry instead. An audience column such as
+`countryip(de)` controls who qualifies, not which block consumes the command.
+
+### C2 Gnav cards and submenu content
+
+**Use `in-block:global-navigation` against the authored submenu HTML.**
+Identify C2 from `foundation: c2` or `gnav-foundation: c2`. Milo reads
+`config.mep.inBlock['global-navigation'].commands` and passes those commands
+to Federal. Federal applies them to each fetched fragment's parsed **plain
+HTML before rendering the cards**. Rendered tab IDs such as `#0` and
+`feds-product-card__content` / `feds-product-card__title` do not exist yet.
+Adding a flag to that rendered CSS chain cannot fix it.
+
+Inspect supplied page and manifest URLs read-only, then follow the loaded nav's
+submenu links to their `.plain.html` content. Do not stop at a screenshot or
+ask the author to paste HTML that is already accessible. If access fails,
+state the limitation and label proposed rows as examples, not verified fixes.
+
+**Synthetic example:** the intended submenu contains `h2#featured`, followed
+by sibling `.product-card` blocks. The first card's second cell contains
+`<p><a href="/example/tool.html">Example Tool</a></p><p>Old subtitle</p>`.
+For an inspected manifest whose selected experience is `all`:
+
+| action | selector | all |
+|---|---|---|
+| replace | `in-block:global-navigation #featured ~ product-card1 p:first-child a` | New title |
+| replace | `in-block:global-navigation #featured ~ product-card1 p:nth-child(2)` | New subtitle |
+
+`product-card1` means the first `.product-card` among siblings under the same
+parent, not the first card across the whole nav. Confirm each selector matches
+exactly the intended authored element in the submenu that actually loads.
+Use the actual heading ID; localized headings have localized IDs. An authored
+variant class can be a stable alternative when available, but do not invent
+one or imply an English heading ID will work in every locale.
+
+**Scope the submenu, not just the product.** A link-only selector such as
+`product-card:has(a[href*="/example/tool.html"]) p:first-child a` can match
+the same product in several tabs. Federal calls the handler with its command
+list for each fetched fragment; first-match completion in one call does not
+prevent that list being applied in another. `#_all` is not needed to produce
+this cross-tab problem. Narrow the selector and check other submenus rather
+than promising a single nav-wide match.
+
+`#_include-gnav` remains a supported alternative routing flag in current Milo;
+it is not required in addition to the C2 `in-block:global-navigation` prefix.
+Do not claim the flag is invalid or that C2 supports only in-block commands:
+the adapter forwards both lists. Deployed versions can differ.
+
+Verify the page with the intended manifest and experience selected in `?mep`:
+the targeted card shows the new title/subtitle, sibling cards and other tabs
+retain their original content, and its final link/analytics remain appropriate.
+Changing the title can also change the derived `daa-ll` analytics label.
+
+Source: `registerInBlockActions` and `handleCommands` in the bundled
+`personalization.js`; Milo C2 `init` in
+[`libs/c2/blocks/global-navigation/global-navigation.js`](https://github.com/adobecom/milo/blob/85166b790ebc4f2c331b4d890ee119edd84925dd/libs/c2/blocks/global-navigation/global-navigation.js)
+reads the exact key and forwards both command lists with
+`handleCommands(cs, root, true, true)`. Federal's deployed
+`/federal/libs/global-navigation/dist/main.js` applies that handler after
+parsing fetched HTML and before product-card rendering. The adapter and Federal
+bundle are **not** in the bundled snapshot; verify the deployed integration
+when behavior differs. Offline core tests do not certify that integration.
+
+### Modifying the gnav promo strip
 
 **Modifying the gnav promo strip.** The gnav and footer **source is derived from
 metadata**, so an alternative to a selector is to use `updateMetadata` to point
 the gnav at a **new source fragment** for the targeted audience. The promo strip
-/ blade above the nav is reachable this way (added per page). Note: targeting the
-**promo card inside the gnav flyout** has been unreliable — no dependable
-selector/attribute for it, so treat that specific element as a known gap.
+/ blade above the nav is reachable this way (added per page). Historical reports
+of unreliable **promo cards inside a flyout** are not a blanket limitation on
+C2 product cards: inspect the specific card's authored block and loading path
+before claiming it cannot be targeted.
 
 **The promo-bar fragment's block depends on which gnav the page uses.** Both
 gnavs read the same `gnav-promo-source` metadata, but each looks for a

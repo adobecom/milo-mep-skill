@@ -3,6 +3,33 @@
 Notable changes to the skill. Newest first. (Maintainer aid; not read at
 runtime.)
 
+## 2026-11-13
+
+**Skill release 1.1.13 — C2 Gnav card selectors (unreleased candidate)**
+- Corrected the C2 registration key from `in-block:global` to
+  `in-block:global-navigation`; added authored product-card example rows,
+  localized heading caveats, and submenu scoping to avoid changing repeated
+  products across tabs. Kept current Milo's valid `#_include-gnav` routing.
+- Added explicit Gnav-card routing/checklist guidance and a troubleshooting
+  pointer. Agents should inspect accessible supplied sources before asking
+  for authored HTML; a rendered selector is not repaired by adding a flag.
+- Added a synthetic behavioral case and adverse grader controls, plus
+  pinned-core regressions for registration, card selector expansion, and
+  reusing a command list across fragment calls. These are offline checks,
+  not a fresh agent evaluation or an end-to-end Federal certification.
+- Directory installs and Singularity's configured skill/index still require
+  a whole-directory refresh and fresh-conversation behavioral validation.
+- Targeted fresh-conversation check: Claude Opus 5.5 and GPT-6.1 Sol on
+  Copilot CLI 1.0.108, medium effort, each passed the C2 Gnav case once.
+  Candidate skill-tree SHA-256:
+  `ed770ee71194ea2d5f278cc7d80c6c8e6935d1e7f25d46d1aad6ddcb3f3cab41`
+  (before this result note). Traces confirm candidate activation and
+  workspace-only reads; final discovery lists only this skill enabled.
+  Initial runs exposing inherited skills were excluded. GPT's correct
+  href-scoped, direct-child selector needed two quote-backed regex waivers.
+  This targeted check is not the full 42-case/repeated release gate or a
+  Singularity deployment test; captures and reviews are kept outside Git.
+
 ## 2026-11-11
 
 **Skill release 1.1.12 — gnav promo bar by gnav type (unreleased candidate)**
